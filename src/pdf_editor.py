@@ -12,13 +12,21 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
-def resize_and_save_image(input_path, output_path, width, bg_color=None):
+def resize_and_save_image(input_path, output_path, width, height=None, bg_color=None):
     # Resize an image to a specified width and save it with an optional background color.
     try:
         img = Image.open(input_path).convert("RGBA")
-        percentage = width / img.width
-        size = (math.floor(img.width * percentage), math.floor(img.height * percentage))
+        width_percentage = width / img.width
+        if height:
+            height_percentage = height / img.height
+        else:
+            height_percentage = width_percentage
+        size = (
+            math.floor(img.width * width_percentage),
+            math.floor(img.height * height_percentage),
+        )
         img = img.resize(size, Image.Resampling.LANCZOS)  # Better quality resizing
+        print(size)
 
         if bg_color:
             bg_rgb = hex_to_rgb(bg_color)
