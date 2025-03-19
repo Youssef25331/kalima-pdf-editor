@@ -147,7 +147,11 @@ class MyGui:
             filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif *.bmp *.tiff *.webp")],
         )
         new_image = Image.open(loaded_logo).convert("RGBA")  # Ensure RGBA mode
-        overlay_image = ct.CTkImage(light_image=new_image, size=(120, 30))
+        size = (120, int(120 * new_image.size[1] / new_image.size[0]))
+        overlay_image = ct.CTkImage(
+            light_image=new_image,
+            size=size,
+        )
         drag_panel = ct.CTkLabel(
             self.background_panel, image=overlay_image, text="", fg_color="#FFFFFF"
         )
@@ -155,8 +159,6 @@ class MyGui:
         item = {
             "image": overlay_image,
             "panel": drag_panel,
-            "width": 120,
-            "height": 40,
             "x": 0,
             "y": 0,
             "is_resizing": False,
