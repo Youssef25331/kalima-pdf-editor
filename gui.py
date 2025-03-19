@@ -2,6 +2,7 @@ import time
 import customtkinter as ct
 import math
 from PIL import ImageTk, Image
+from numpy import size
 import pdf_editor
 from pathlib import Path
 
@@ -51,15 +52,32 @@ class MyGui:
         self.button1.pack(pady=10, padx=10)
         self.button2.pack(pady=10, padx=10)
 
-        self.checkbox_var = ct.BooleanVar(
-            value=False
-        )  # Variable to track checkbox state
-        self.checkbox = ct.CTkCheckBox(
-            self.side_panel,
-            text="Toggle Option",
-            variable=self.checkbox_var,
+        self.logo_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Click TO add Image",
+            height=40,
+            command=self.add_logo,
         )
-        self.checkbox.pack(pady=10, padx=10)
+        self.logo_button.pack(anchor="center")
+
+        self.submit_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Convert",
+            height=20,
+            command=self.convert_pdf,
+        )
+
+        self.submit_button.pack(pady=40, anchor="s")
+
+        # self.checkbox_var = ct.BooleanVar(
+        #     value=False
+        # )  # Variable to track checkbox state
+        # self.checkbox = ct.CTkCheckBox(
+        #     self.side_panel,
+        #     text="Toggle Option",
+        #     variable=self.checkbox_var,
+        # )
+        # self.checkbox.pack(pady=10, padx=10)
 
         self.base_pdf = Image.open("background.png")
         self.img = ct.CTkImage(
@@ -76,7 +94,6 @@ class MyGui:
 
         # Functions after initalization
         self.set_image()
-        self.add_image()
 
         # Optional: Disable the main window while the new one is open
         self.pdf_window.grab_set()
@@ -105,13 +122,30 @@ class MyGui:
             self.current_page_number -= 1
             self.set_image()
 
-    def add_image(self):
-        new_image = Image.open("logo.png")
-        self.overlay_image = ct.CTkImage(
-            light_image=new_image,
+    def add_logo(self):
+        self.loaded_logo = ct.filedialog.askopenfilename(
+            initialdir=Path.cwd(),
+            filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif *.bmp *.tiff *.webp")],
         )
+        self.add_image()
+
+    def convert_pdf(self):
+        pdf_editor.merge_pdfs(
+            "testing2.pdf",
+            "temp.pdf",
+            "output.pdf",
+            30,
+            (self.image_pdf_relative_x,0.05),
+            [1],
+            True,
+        )
+        return
+
+    def add_image(self):
+        new_image = Image.open(self.loaded_logo)
+        self.overlay_image = ct.CTkImage(light_image=new_image, size=(120, 40))
         self.drag_panel = ct.CTkLabel(
-            self.image_frame, image=self.overlay_image, text=""
+            self.image_panel, image=self.overlay_image, text=""
         )
         self.drag_panel.place(x=0, y=0)
         self.drag_panel.bind("<Button-1>", self.start_drag)
@@ -125,12 +159,19 @@ class MyGui:
         # Calculate the new position
         new_x = self.drag_panel.winfo_x() + event.x
         new_y = self.drag_panel.winfo_y() + event.y
-        pdf_x_position_difference = math.ceil(
-            ((self.image_frame._current_width - self.img._size[0]) / 2)
-            + (self.drag_panel._current_width / 2)
+
+        scaling = self.image_panel.winfo_height() / self.img.cget("size")[1]
+        rendered_image_width = self.img.cget("size")[0] * scaling
+        rendered_image_height = self.img.cget("size")[1] * scaling
+        self.image_pdf_relative_x = (
+            self.drag_panel.winfo_x()
+            - ((self.image_panel.winfo_width() - rendered_image_width) / 2)
+        ) / rendered_image_width
+
+        self.image_pdf_relative_y = (
+            self.drag_panel.winfo_y() / self.image_panel.winfo_height()
         )
-        print(self.drag_panel.winfo_x() - pdf_x_position_difference)
-        print()
+        print(self.image_pdf_relative_x, self.image_pdf_relative_y)
 
         # Optional: Constrain within image_frame bounds
         frame_width = self.image_frame._current_width
@@ -148,7 +189,7 @@ class MyGui:
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
         aspect_ratio = orig_width / orig_height
-        new_width = self.image_frame._current_width
+        new_width = self.image_frame.winfo_width()
         new_height = self.image_frame._current_height
 
         if new_width / new_height > aspect_ratio:

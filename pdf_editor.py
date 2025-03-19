@@ -107,6 +107,7 @@ def merge_pdfs(
     overlay_height,
     start_loc=(0, 0),
     exclude_pages=None,
+    percentage=False,
 ):
     """Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages."""
     exclude_pages = exclude_pages or []
@@ -118,6 +119,11 @@ def merge_pdfs(
         base_pdf = PdfReader(base_pdf_path)
         overlay_pdf = PdfReader(overlay_pdf_path)
         writer = PdfWriter()
+        if percentage:
+            start_loc = (
+                base_pdf.pages[0].mediabox[2] * start_loc[0],
+                base_pdf.pages[0].mediabox[3] * start_loc[1],
+            )
 
         for page_num, page in enumerate(base_pdf.pages, start=1):
             if page_num not in exclude_pages:
@@ -148,13 +154,14 @@ if __name__ == "__main__":
             width = int(input("Enter width: "))
             bg_color = input("Enter background color in HEX (optional): ") or None
             start_loc = tuple(
-                map(int, input("Enter insert location (e.g., 20,300): ").split(","))
+                map(float, input("Enter insert location (e.g., 20,300): ").split(","))
             )
             exclude = list(
                 map(int, input("Enter excluded pages (e.g., 1,2): ").split(","))
             )
-            size = resize_and_save_image(logo_path, temp_path, width, bg_color)
-            merge_pdfs(pdf_path, temp_path, output_pdf, size[1], start_loc, exclude)
+            merge_pdfs(
+                pdf_path, temp_path, output_pdf, 30, start_loc, exclude, True
+            )
             break
 
         elif mode.lower() == "text":
