@@ -54,7 +54,7 @@ class MyGui:
             master=self.side_panel,
             text="Click TO add Image",
             height=40,
-            command=self.import_image,
+            command=self.add_image,
         )
         self.logo_button.pack(anchor="center")
 
@@ -79,48 +79,44 @@ class MyGui:
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-        self.image_panel = ct.CTkLabel(self.image_frame)
+        self.background_panel = ct.CTkLabel(self.image_frame)
 
         # Bind the resize event to the image frame (not the whole window)
         self.image_frame.bind("<Configure>", self.resize_image)
 
-        # Functions after initalization
+        # Actions after initalization
 
-        self.set_image()
+        self.set_background()
+        self.editing_items = []
 
         # Optional: Disable the main window while the new one is open
         self.pdf_window.grab_set()
         self.pdf_window.mainloop()
 
-    def set_image(self, image_location="temp_pdf.png"):
+    def set_background(self, image_location="temp_pdf.png"):
         self.pdf_page_count = pdf_editor.convert_pdf_page(
             self.pdf, self.current_page_number
         )
-        self.image_panel.destroy()
+        self.background_panel.destroy()
         self.base_pdf = Image.open(image_location)
-        self.img = ct.CTkImage(
+        self.background_image = ct.CTkImage(
             dark_image=self.base_pdf,
             size=(400, 600),
         )
 
-        self.image_panel = ct.CTkLabel(self.image_frame, image=self.img)
-        self.image_panel.pack(fill="both", expand=True, padx=0, pady=0)
+        self.background_panel = ct.CTkLabel(
+            self.image_frame, image=self.background_image
+        )
+        self.background_panel.pack(fill="both", expand=True, padx=0, pady=0)
         self.resize_image()
 
     def page_move(self, right):
         if right and self.current_page_number < self.pdf_page_count:
             self.current_page_number += 1
-            self.set_image()
+            self.set_background()
         elif (not right) and self.current_page_number > 1:
             self.current_page_number -= 1
-            self.set_image()
-
-    def import_image(self):
-        self.loaded_logo = ct.filedialog.askopenfilename(
-            initialdir=Path.cwd(),
-            filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif *.bmp *.tiff *.webp")],
-        )
-        self.add_image()
+            self.set_background()
 
     def convert_pdf(self):
         image_translations = pdf_editor.percentage_converter(
@@ -146,58 +142,85 @@ class MyGui:
         return
 
     def add_image(self):
-        new_image = Image.open(self.loaded_logo).convert("RGBA")  # Ensure RGBA mode
-        self.overlay_image = ct.CTkImage(light_image=new_image, size=(120, 40))
-        self.drag_panel = ct.CTkLabel(
-            self.image_panel, image=self.overlay_image, text="", fg_color="#FFFFFF"
+        loaded_logo = ct.filedialog.askopenfilename(
+            initialdir=Path.cwd(),
+            filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif *.bmp *.tiff *.webp")],
         )
-        self.drag_panel.place(x=0, y=0)
-        self.drag_panel.bind("<Button-1>", self.start_drag)
-        self.drag_panel.bind("<B1-Motion>", self.do_drag)
+        new_image = Image.open(loaded_logo).convert("RGBA")  # Ensure RGBA mode
+        overlay_image = ct.CTkImage(light_image=new_image, size=(120, 30))
+        drag_panel = ct.CTkLabel(
+            self.background_panel, image=overlay_image, text="", fg_color="#FFFFFF"
+        )
+        drag_panel.place(x=0, y=0)
+        item = {
+            "image": overlay_image,
+            "panel": drag_panel,
+            "width": 120,
+            "height": 40,
+            "x": 0,
+            "y": 0,
+            "is_resizing": False,
+            "resize_edge": None,
+            "start_x": 0,
+            "start_y": 0,
+            "relative_x": 0,
+            "relative_y": 0,
+            "width_percent": 0,
+            "height_percent": 0,
+        }
+        drag_panel.bind("<B1-Motion>", lambda event: self.do_drag(event, item))
+        self.calulate_relation(item)
+
+        self.editing_items.append(item)
+
+    # A function to calculate all the required relative numbers for the conversion.
+    def calulate_relation(self, item):
+        image_width = item["panel"].winfo_width()
+        image_height = item["panel"].winfo_height()
+        image_position_x = item["panel"].winfo_x()
+        image_position_y = item["panel"].winfo_y()
+
+        scaling = (
+            self.background_panel.winfo_height() / self.background_image.cget("size")[1]
+        )
+
+        rendered_pdf_width = self.background_image.cget("size")[0] * scaling
+        rendered_pdf_height = self.background_image.cget("size")[1] * scaling
+        item["relative_x"] = (
+            image_position_x
+            - ((self.background_panel.winfo_width() - rendered_pdf_width) / 2)
+        ) / rendered_pdf_width
+
+        item["relative_y"] = image_position_y / self.background_panel.winfo_height()
+
+        item["width_percent"] = image_width / rendered_pdf_width
+        item["height_percent"] = image_height / rendered_pdf_height
 
     def start_drag(self, event):
-        # Store the initial mouse position relative to the draggable image
         return
 
-    def do_drag(self, event):
-        image_width = self.drag_panel.winfo_width()
-        image_height = self.drag_panel.winfo_height()
-        image_position_x = self.drag_panel.winfo_x()
-        image_position_y = self.drag_panel.winfo_y()
-        self.drag_panel.configure(fg_color="#000000")
+    def do_drag(self, event, item):
+        image_position_x = item["panel"].winfo_x()
+        image_position_y = item["panel"].winfo_y()
 
+        item["panel"].configure(fg_color="#000000")
         # Calculate the new position
         new_x = image_position_x + event.x
         new_y = image_position_y + event.y
 
-        scaling = self.image_panel.winfo_height() / self.img.cget("size")[1]
-
-        rendered_pdf_width = self.img.cget("size")[0] * scaling
-        rendered_pdf_height = self.img.cget("size")[1] * scaling
-        self.image_pdf_relative_x = (
-            image_position_x
-            - ((self.image_panel.winfo_width() - rendered_pdf_width) / 2)
-        ) / rendered_pdf_width
-
-        self.image_pdf_relative_y = image_position_y / self.image_panel.winfo_height()
-
-        self.image_pdf_width_percentage = image_width / rendered_pdf_width
-        self.image_pdf_height_percentage = image_height / rendered_pdf_height
-
-        print(self.image_pdf_relative_x, self.image_pdf_relative_y)
-
         # Optional: Constrain within image_frame bounds
-        # frame_width = self.image_frame._current_width
-        # frame_height = self.image_frame._current_height
-        # drag_width = self.drag_panel._current_width
-        # drag_height = self.drag_panel._current_height
+        frame_width = self.image_frame.winfo_width()
+        frame_height = self.image_frame.winfo_height()
+        drag_width = item["panel"].winfo_width()
+        drag_height = item["panel"].winfo_height()
 
-        # # Bind withing image_frame
-        # new_x = max(0, min(new_x, frame_width - drag_width))  # Keep within x bounds
-        # new_y = max(0, min(new_y, frame_height - drag_height))
+        # Bind withing image_frame
+        new_x = max(drag_width / 2, min(new_x, frame_width - drag_width / 2))
+        new_y = max(drag_height / 2, min(new_y, frame_height - drag_height / 2))
 
         # Move the draggable image
-        self.drag_panel.place(x=new_x, y=new_y, anchor="center")
+        item["panel"].place(x=new_x, y=new_y, anchor="center")
+        self.calulate_relation(item)
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
@@ -209,10 +232,10 @@ class MyGui:
             new_width = int(new_height * aspect_ratio)
 
         # Update the CTkImage size dynamically
-        self.img.configure(size=(new_width, new_height))
+        self.background_image.configure(size=(new_width, new_height))
 
         # Optional: Force update the label to reflect the new image size
-        self.image_panel.configure(image=self.img)
+        self.background_panel.configure(image=self.background_image)
 
 
 root = ct.CTk()
