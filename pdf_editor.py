@@ -100,6 +100,24 @@ def convert_pdf_page(pdf_path, page_number):
         return False
 
 
+# Percentage In the case the values where being sent by the GUI
+def percentage_converter(pdf_path, dimensions, location):
+    pdf = PdfReader(pdf_path)
+
+    converted_dimensions = (
+        math.floor(pdf.pages[0].mediabox[2] * dimensions[0]),
+        math.floor(pdf.pages[0].mediabox[3] * dimensions[1]),
+    )
+
+    # In my testing this formula was the most accurate to what the user sees.
+    converted_location = (
+        math.floor(pdf.pages[0].mediabox[2] * location[0]) - 1,
+        math.floor(pdf.pages[0].mediabox[3] * location[1]) - 1,
+    )
+    print([converted_dimensions, converted_location])
+    return [converted_dimensions, converted_location]
+
+
 def merge_pdfs(
     base_pdf_path,
     overlay_pdf_path,
@@ -107,7 +125,6 @@ def merge_pdfs(
     overlay_height,
     start_loc=(0, 0),
     exclude_pages=None,
-    percentage=False,
 ):
     # Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages.
     exclude_pages = exclude_pages or []
@@ -119,14 +136,6 @@ def merge_pdfs(
         base_pdf = PdfReader(base_pdf_path)
         overlay_pdf = PdfReader(overlay_pdf_path)
         writer = PdfWriter()
-        # Percentage In the case the values where being sent by the GUI
-        if percentage:
-            # In my testing this formula was the most accurate to what the user sees.
-            start_loc = (
-                math.floor(base_pdf.pages[0].mediabox[2] * start_loc[0]) - 1,
-                math.floor(base_pdf.pages[0].mediabox[3] * start_loc[1]) - 1,
-            )
-            print(start_loc)
 
         for page_num, page in enumerate(base_pdf.pages, start=1):
             if page_num not in exclude_pages:

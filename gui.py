@@ -1,7 +1,6 @@
-import time
 import customtkinter as ct
 import math
-from PIL import ImageTk, Image
+from PIL import Image
 import pdf_editor
 from pathlib import Path
 
@@ -129,15 +128,21 @@ class MyGui:
         self.add_image()
 
     def convert_pdf(self):
-        size = pdf_editor.resize_and_save_image("logo.png", "temp.pdf", 150, "000000")
+        image_translations = pdf_editor.percentage_converter(
+            self.pdf,
+            (self.image_pdf_width_percentage, self.image_pdf_height_percentage),
+            (self.image_pdf_relative_x, self.image_pdf_relative_y),
+        )
+        pdf_editor.resize_and_save_image(
+            self.loaded_logo, "temp.pdf", image_translations[0][0], "FFFFFF"
+        )
         pdf_editor.merge_pdfs(
-            "testing2.pdf",
+            self.pdf,
             "temp.pdf",
             "output.pdf",
-            size[1],
-            (self.image_pdf_relative_x, self.image_pdf_relative_y),
+            image_translations[0][1],
+            image_translations[1],
             [1],
-            True,
         )
         return
 
@@ -145,7 +150,7 @@ class MyGui:
         new_image = Image.open(self.loaded_logo)
         self.overlay_image = ct.CTkImage(light_image=new_image, size=(120, 40))
         self.drag_panel = ct.CTkLabel(
-            self.image_panel, image=self.overlay_image, text=""
+            self.image_panel, image=self.overlay_image, text="", anchor="center"
         )
         self.drag_panel.place(x=0, y=0)
         self.drag_panel.bind("<Button-1>", self.start_drag)
@@ -156,21 +161,29 @@ class MyGui:
         return
 
     def do_drag(self, event):
+        image_width = self.drag_panel.winfo_width()
+        image_height = self.drag_panel.winfo_height()
+        image_position_x = self.drag_panel.winfo_x()
+        image_position_y = self.drag_panel.winfo_y()
+
         # Calculate the new position
-        new_x = self.drag_panel.winfo_x() + event.x
-        new_y = self.drag_panel.winfo_y() + event.y
+        new_x = image_position_x + event.x
+        new_y = image_position_y + event.y
 
         scaling = self.image_panel.winfo_height() / self.img.cget("size")[1]
-        rendered_image_width = self.img.cget("size")[0] * scaling
-        rendered_image_height = self.img.cget("size")[1] * scaling
-        self.image_pdf_relative_x = (
-            self.drag_panel.winfo_x()
-            - ((self.image_panel.winfo_width() - rendered_image_width) / 2)
-        ) / rendered_image_width
 
-        self.image_pdf_relative_y = (
-            self.drag_panel.winfo_y() / self.image_panel.winfo_height()
-        )
+        rendered_pdf_width = self.img.cget("size")[0] * scaling
+        rendered_pdf_height = self.img.cget("size")[1] * scaling
+        self.image_pdf_relative_x = (
+            image_position_x
+            - ((self.image_panel.winfo_width() - rendered_pdf_width) / 2)
+        ) / rendered_pdf_width
+
+        self.image_pdf_relative_y = image_position_y / self.image_panel.winfo_height()
+
+        self.image_pdf_width_percentage = image_width / rendered_pdf_width
+        self.image_pdf_height_percentage = image_height / rendered_pdf_height
+
         print(self.image_pdf_relative_x, self.image_pdf_relative_y)
 
         # Optional: Constrain within image_frame bounds
@@ -184,7 +197,7 @@ class MyGui:
         new_y = max(0, min(new_y, frame_height - drag_height))
 
         # Move the draggable image
-        self.drag_panel.place(x=new_x, y=new_y)
+        self.drag_panel.place(x=new_x, y=new_y, anchor="center")
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
