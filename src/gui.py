@@ -77,11 +77,6 @@ class MyGui:
         # )
         # self.checkbox.pack(pady=10, padx=10)
 
-        self.base_pdf = Image.open("background.png")
-        self.img = ct.CTkImage(
-            dark_image=self.base_pdf,
-            size=(400, 600),
-        )
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
@@ -91,6 +86,13 @@ class MyGui:
         self.image_frame.bind("<Configure>", self.resize_image)
 
         # Functions after initalization
+
+        self.set_image()
+        self.base_pdf = Image.open("temp_pdf.png")
+        self.img = ct.CTkImage(
+            dark_image=self.base_pdf,
+            size=(400, 600),
+        )
         self.set_image()
 
         # Optional: Disable the main window while the new one is open
