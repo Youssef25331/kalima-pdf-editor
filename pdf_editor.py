@@ -7,13 +7,13 @@ from pathlib import Path
 
 
 def hex_to_rgb(hex_color):
-    """Convert a HEX color string (e.g., 'FF0000') to an RGB tuple."""
+    # Convert a HEX color string (e.g., 'FF0000') to an RGB tuple.
     hex_color = hex_color.lstrip("#")  # Remove optional '#'
     return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def resize_and_save_image(input_path, output_path, width, bg_color=None):
-    """Resize an image to a specified width and save it with an optional background color."""
+    # Resize an image to a specified width and save it with an optional background color.
     try:
         img = Image.open(input_path).convert("RGBA")
         percentage = width / img.width
@@ -24,9 +24,9 @@ def resize_and_save_image(input_path, output_path, width, bg_color=None):
             bg_rgb = hex_to_rgb(bg_color)
             background = Image.new("RGBA", size, bg_rgb + (255,))  # Add alpha channel
             background.paste(img, (0, 0), mask=img)
-            background.save(output_path, "PNG")
+            background.save(output_path, "PDF")
         else:
-            img.save(output_path, "PNG")
+            img.save(output_path, "PDF")
 
         return size
     except FileNotFoundError:
@@ -83,7 +83,7 @@ def convert_pdf_page(pdf_path, page_number):
             first_page=page_number,  # Convert to 1-based
             last_page=page_number,  # Only convert one page
             dpi=200,
-            poppler_path=r"E:\Kalima-PDF-Editor-V2\poppler-24.08.0\Library\bin",
+            poppler_path=r"poppler-24.08.0\Library\bin",
         )
 
         if images:
@@ -109,7 +109,7 @@ def merge_pdfs(
     exclude_pages=None,
     percentage=False,
 ):
-    """Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages."""
+    # Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages.
     exclude_pages = exclude_pages or []
     base_pdf_path = Path(base_pdf_path).resolve()
     overlay_pdf_path = Path(overlay_pdf_path).resolve()
@@ -119,18 +119,25 @@ def merge_pdfs(
         base_pdf = PdfReader(base_pdf_path)
         overlay_pdf = PdfReader(overlay_pdf_path)
         writer = PdfWriter()
+        # Percentage In the case the values where being sent by the GUI
         if percentage:
+            # In my testing this formula was the most accurate to what the user sees.
             start_loc = (
-                base_pdf.pages[0].mediabox[2] * start_loc[0],
-                base_pdf.pages[0].mediabox[3] * start_loc[1],
+                math.floor(base_pdf.pages[0].mediabox[2] * start_loc[0]) - 1,
+                math.floor(base_pdf.pages[0].mediabox[3] * start_loc[1]) - 1,
             )
+            print(start_loc)
 
         for page_num, page in enumerate(base_pdf.pages, start=1):
             if page_num not in exclude_pages:
                 page.merge_translated_page(
                     overlay_pdf.pages[0],
                     start_loc[0],
-                    page.mediabox[3] - overlay_height - start_loc[1],
+                    page.mediabox[3]
+                    - overlay_height
+                    - start_loc[
+                        1
+                    ],  # Removes the overlay and the Y start locatin to be inserted in the correct spot since the Y starts from the bottom.
                 )
             writer.add_page(page)
 
@@ -139,7 +146,7 @@ def merge_pdfs(
     except FileNotFoundError:
         raise ValueError(f"PDF file not found: {base_pdf_path} or {overlay_pdf_path}")
     except Exception as e:
-        raise ValueError(f"Error merging PDFs: {str(e)}")
+        raise ValueError(f"Error merging PDFs: {e}")
 
 
 if __name__ == "__main__":
@@ -159,8 +166,9 @@ if __name__ == "__main__":
             exclude = list(
                 map(int, input("Enter excluded pages (e.g., 1,2): ").split(","))
             )
+            size = resize_and_save_image(logo_path, temp_path, width, bg_color)
             merge_pdfs(
-                pdf_path, temp_path, output_pdf, 30, start_loc, exclude, True
+                pdf_path, "testing2.pdf", output_pdf, size[1], start_loc, exclude, True
             )
             break
 

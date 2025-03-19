@@ -2,7 +2,6 @@ import time
 import customtkinter as ct
 import math
 from PIL import ImageTk, Image
-from numpy import size
 import pdf_editor
 from pathlib import Path
 
@@ -130,12 +129,13 @@ class MyGui:
         self.add_image()
 
     def convert_pdf(self):
+        size = pdf_editor.resize_and_save_image("logo.png", "temp.pdf", 150, "000000")
         pdf_editor.merge_pdfs(
             "testing2.pdf",
             "temp.pdf",
             "output.pdf",
-            30,
-            (self.image_pdf_relative_x,0.05),
+            size[1],
+            (self.image_pdf_relative_x, self.image_pdf_relative_y),
             [1],
             True,
         )
