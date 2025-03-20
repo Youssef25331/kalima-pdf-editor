@@ -45,7 +45,9 @@ def resize_and_save_image(
         raise ValueError(f"Error processing image: {str(e)}")
 
 
-def create_text_pdf(text, dimensions, output_path, text_color="000000", bg_color=None):
+def create_text_pdf(
+    text, dimensions, output_path, text_color="000000", bg_color=None, font="helvetica"
+):
     """Create a PDF with text at specified dimensions, with optional text and background colors."""
     pdf = FPDF("P", "pt", dimensions)
     pdf.set_margins(0, 0)
@@ -62,7 +64,7 @@ def create_text_pdf(text, dimensions, output_path, text_color="000000", bg_color
             0, 0, 9999, 9999, style="F"
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
 
-    pdf.set_font("helvetica", size=int(dimensions[0] * 0.09))
+    pdf.set_font(font, size=int(dimensions[0] * 0.09))
     pdf.multi_cell(0, 22, txt=text, align="C", border=0)
     pdf.output(output_path)
 

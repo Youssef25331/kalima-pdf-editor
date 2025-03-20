@@ -53,13 +53,21 @@ class MyGui:
         self.button1.pack(pady=10, padx=10)
         self.button2.pack(pady=10, padx=10)
 
-        self.logo_button = ct.CTkButton(
+        self.image_button = ct.CTkButton(
             master=self.side_panel,
             text="Click TO add Image",
             height=40,
             command=self.add_image,
         )
-        self.logo_button.pack(anchor="center")
+        self.image_button.pack(pady=10, anchor="center")
+
+        self.text_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Click TO add Text",
+            height=40,
+            command=self.add_text,
+        )
+        self.text_button.pack(pady=10, anchor="center")
 
         self.submit_button = ct.CTkButton(
             master=self.side_panel,
@@ -108,7 +116,6 @@ class MyGui:
     def opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["opacity"] = round(value, 1)
-        print(item["opacity"])
 
     def set_background(self, image_location="temp_pdf.png"):
         self.pdf_page_count = pdf_editor.convert_pdf_page(
@@ -204,6 +211,44 @@ class MyGui:
 
         self.editing_items.append(item)
 
+    def add_text(self):
+        drag_panel = ct.CTkLabel(
+            self.background_panel,
+            text="This is a text",
+            text_color="#000000",
+            fg_color="#FFFFFF",
+            width=120,
+            height=120,
+            anchor="center",
+        )
+        drag_panel.place(anchor="center")
+        item = {
+            "index": len(self.editing_items),
+            "type": "text",
+            "text": "this is a text",
+            "panel": drag_panel,
+            "x": 0,
+            "y": 0,
+            "is_resizing": False,
+            "resize_edge": None,
+            "start_x": 0,
+            "start_y": 0,
+            "relative_x": 0,
+            "relative_y": 0,
+            "width_percent": 0,
+            "height_percent": 0,
+            "bg_color": "#FFFFFF",
+            "opacity": 1,
+        }
+        drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))
+        drag_panel.bind("<B1-Motion>", lambda event: self.do_action(event, item))
+        drag_panel.bind(
+            "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
+        )
+        self.calulate_relation(item)
+
+        self.editing_items.append(item)
+
     # A function to calculate all the required relative numbers for the conversion.
     def calulate_relation(self, item):
         image_width = item["panel"].winfo_width()
@@ -257,23 +302,26 @@ class MyGui:
             self.do_drag(event, item)
 
     def do_resize(self, event, item):
+        new_width = item["panel"].winfo_width()
+        new_height = item["panel"].winfo_height()
         if item["resize_edge"] == "bottom":
             dy = event.y - item["panel"].winfo_height()
+            new_width = item["panel"].winfo_width()
             new_height = item["panel"].winfo_height() + dy
-            item["image"].configure(size=(item["panel"].winfo_width(), new_height))
             self.image_frame.configure(cursor="sb_down_arrow")
-            new_y = item["panel"].winfo_y()
         elif item["resize_edge"] == "right":
             dx = event.x - item["panel"].winfo_width()
             new_width = item["panel"].winfo_width() + dx
-            item["image"].configure(size=(new_width, item["panel"].winfo_height()))
             self.image_frame.configure(cursor="sb_right_arrow")
         elif item["resize_edge"] == "bottom-right":
             dx = event.x - item["panel"].winfo_width()
             new_width = item["panel"].winfo_width() + dx
             new_height = item["panel"].winfo_height() + dx
-            item["image"].configure(size=(new_width, new_height))
             self.image_frame.configure(cursor="sizing")
+        if "image" in item:
+            item["image"].configure(size=(new_width, new_height))
+        else:
+            item["panel"].configure(width=new_width, height=new_height)
 
     def stop_action(self, event, item):
         self.calulate_relation(item)
