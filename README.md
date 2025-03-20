@@ -18,7 +18,7 @@ To run this project, ensure you have the following dependencies installed:
 
 Install these packages using `pip`. For example:
 ```bash
-pip install pypdf pdf2image fpdf Pillow customtkinter
+pip install pypdf pdf2image fpdf Pillow customtkinter CTkColorPicker
 ```
 ### External Dependency
 - **Poppler**: Required for PDF-to-image conversion  
