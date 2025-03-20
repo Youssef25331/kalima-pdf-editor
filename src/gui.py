@@ -105,6 +105,18 @@ class MyGui:
         )
         self.text_color_button.pack(pady=10)
 
+        self.text_entry = ct.CTkEntry(
+            master=self.side_panel,
+            placeholder_text="Input text",
+            width=150,
+        )
+        self.text_entry.pack(pady=5)
+
+        self.text_submit = ct.CTkButton(
+            master=self.side_panel, text="Submit", command=self.set_text
+        )
+        self.text_submit.pack(pady=5)
+
         self.exclusion_entry = ct.CTkEntry(
             master=self.side_panel,
             placeholder_text="10,14,30....",
@@ -112,10 +124,10 @@ class MyGui:
         )
         self.exclusion_entry.pack(pady=5)
 
-        self.exlusion_submit = ct.CTkButton(
+        self.exclusion_submit = ct.CTkButton(
             master=self.side_panel, text="Submit", command=self.set_exclusion
         )
-        self.exlusion_submit.pack(pady=5)
+        self.exclusion_submit.pack(pady=5)
 
         self.submit_button = ct.CTkButton(
             master=self.side_panel,
@@ -159,6 +171,13 @@ class MyGui:
             active_fonts.append(font[0])
         return active_fonts
 
+    def set_text(self):
+        input_text = self.text_entry.get()
+        item = self.editing_items[self.current_item]
+        if "text" in item:
+            item["text"] = input_text
+            item["panel"].configure(text=input_text)
+
     def bg_color_picker(self):
         pick_color = CTkColorPicker.AskColor()
         color = pick_color.get()
@@ -197,16 +216,13 @@ class MyGui:
         self.pdf_page_count = pdf_editor.convert_pdf_page(
             self.pdf, self.current_page_number
         )
-        self.background_panel.destroy()
         self.base_pdf = Image.open(image_location)
         self.background_image = ct.CTkImage(
             dark_image=self.base_pdf,
             size=(400, 600),
         )
+        self.background_panel.configure(image=self.background_image)
 
-        self.background_panel = ct.CTkLabel(
-            self.image_frame, image=self.background_image
-        )
         self.background_panel.pack(fill="both", expand=True, padx=0, pady=0)
         self.resize_image()
 
@@ -219,39 +235,40 @@ class MyGui:
             self.set_background()
 
     def convert_pdf(self):
-        item = self.editing_items[self.current_item]
-        item_translations = pdf_editor.percentage_converter(
-            self.pdf,
-            (item["width_percent"], item["height_percent"]),
-            (item["relative_x"], item["relative_y"]),
-        )
-        if "image" in item:
-            pdf_editor.resize_and_save_image(
-                item["image_location"],
+        for item in self.editing_items:
+            item_translations = pdf_editor.percentage_converter(
+                self.pdf,
+                (item["width_percent"], item["height_percent"]),
+                (item["relative_x"], item["relative_y"]),
+            )
+            if "image" in item:
+                pdf_editor.resize_and_save_image(
+                    item["image_location"],
+                    "temp.pdf",
+                    item["opacity"],
+                    item_translations[0][0],
+                    item_translations[0][1],
+                    item["panel"]._fg_color,
+                )
+            else:
+                pdf_editor.create_text_pdf(
+                    item["text"],
+                    (item_translations[0][0], item_translations[0][1]),
+                    "temp.pdf",
+                    bg_color=item["bg_color"],
+                    text_color=item["text_color"],
+                    font_family=item["font_family"],
+                    font_size=item["font_size"],
+                )
+            pdf_editor.merge_pdfs(
+                self.pdf,
                 "temp.pdf",
-                item["opacity"],
-                item_translations[0][0],
+                "output.pdf",
                 item_translations[0][1],
-                item["panel"]._fg_color,
+                item_translations[1],
+                self.exclusion_list,
             )
-        else:
-            pdf_editor.create_text_pdf(
-                item["text"],
-                (item_translations[0][0], item_translations[0][1]),
-                "temp.pdf",
-                bg_color=item["bg_color"],
-                font_family=item["font_family"],
-                font_size=item["font_size"],
-            )
-        pdf_editor.merge_pdfs(
-            self.pdf,
-            "temp.pdf",
-            "output.pdf",
-            item_translations[0][1],
-            item_translations[1],
-            self.exclusion_list,
-        )
-        return
+            return
 
     def add_image(self):
         loaded_logo = ct.filedialog.askopenfilename(
@@ -284,7 +301,6 @@ class MyGui:
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#FFFFFF",
-            "text_color": "000000",
             "opacity": 1,
         }
         print(item["index"])
@@ -328,6 +344,7 @@ class MyGui:
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#FFFFFF",
+            "text_color": "000000",
             "opacity": 1,
         }
         drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))

@@ -1,8 +1,8 @@
 import math
 from pypdf import PdfReader, PdfWriter
 from pdf2image import convert_from_path
-from fpdf import FPDF
 from PIL import Image
+from fpdf import FPDF
 from pathlib import Path
 
 
@@ -73,7 +73,7 @@ def create_text_pdf(
     pdf = FPDF("P", "pt", dimensions)
     pdf.set_margins(0, 0)
     pdf.set_auto_page_break(False)
-    pdf.add_page()
+    pdf.add_page()  
 
     text_rgb = hex_to_rgb(text_color)
     pdf.set_text_color(*text_rgb)
