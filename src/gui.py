@@ -1,4 +1,5 @@
 import customtkinter as ct
+import CTkColorPicker
 import math
 from PIL import Image
 import pdf_editor
@@ -67,15 +68,10 @@ class MyGui:
 
         self.submit_button.pack(pady=40, anchor="s")
 
-        # self.checkbox_var = ct.BooleanVar(
-        #     value=False
-        # )  # Variable to track checkbox state
-        # self.checkbox = ct.CTkCheckBox(
-        #     self.side_panel,
-        #     text="Toggle Option",
-        #     variable=self.checkbox_var,
-        # )
-        # self.checkbox.pack(pady=10, padx=10)
+        self.color_button = ct.CTkButton(
+            master=self.side_panel, text="Pick Color", command=self.color_picker
+        )
+        self.color_button.pack(pady=10)
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
@@ -92,6 +88,12 @@ class MyGui:
         # Optional: Disable the main window while the new one is open
         self.pdf_window.grab_set()
         self.pdf_window.mainloop()
+
+    def color_picker(self):
+        pick_color = CTkColorPicker.AskColor()
+        color = pick_color.get()
+        if color:
+            self.color_button.configure(fg_color=color)
 
     def set_background(self, image_location="temp_pdf.png"):
         self.pdf_page_count = pdf_editor.convert_pdf_page(
@@ -119,17 +121,18 @@ class MyGui:
             self.set_background()
 
     def convert_pdf(self):
+        item = self.editing_items[0]
         image_translations = pdf_editor.percentage_converter(
             self.pdf,
-            (self.image_pdf_width_percentage, self.image_pdf_height_percentage),
-            (self.image_pdf_relative_x, self.image_pdf_relative_y),
+            (item["width_percent"], item["height_percent"]),
+            (item["relative_x"], item["relative_y"]),
         )
         pdf_editor.resize_and_save_image(
-            self.loaded_logo,
+            item["image_location"],
             "temp.pdf",
             image_translations[0][0],
             image_translations[0][1],
-            self.drag_panel._fg_color,
+            item["panel"]._fg_color,
         )
         pdf_editor.merge_pdfs(
             self.pdf,
@@ -157,6 +160,7 @@ class MyGui:
         )
         drag_panel.place(x=0, y=0)
         item = {
+            "image_location": loaded_logo,
             "image": overlay_image,
             "panel": drag_panel,
             "x": 0,
@@ -170,7 +174,12 @@ class MyGui:
             "width_percent": 0,
             "height_percent": 0,
         }
-        drag_panel.bind("<B1-Motion>", lambda event: self.do_drag(event, item))
+
+        drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))
+        drag_panel.bind("<B1-Motion>", lambda event: self.do_action(event, item))
+        drag_panel.bind(
+            "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
+        )
         self.calulate_relation(item)
 
         self.editing_items.append(item)
@@ -186,20 +195,67 @@ class MyGui:
             self.background_panel.winfo_height() / self.background_image.cget("size")[1]
         )
 
-        rendered_pdf_width = self.background_image.cget("size")[0] * scaling
-        rendered_pdf_height = self.background_image.cget("size")[1] * scaling
+        self.rendered_background_width = self.background_image.cget("size")[0] * scaling
+        self.rendered_pdf_height = self.background_image.cget("size")[1] * scaling
         item["relative_x"] = (
             image_position_x
-            - ((self.background_panel.winfo_width() - rendered_pdf_width) / 2)
-        ) / rendered_pdf_width
+            - (
+                (self.background_panel.winfo_width() - self.rendered_background_width)
+                / 2
+            )
+        ) / self.rendered_background_width
 
         item["relative_y"] = image_position_y / self.background_panel.winfo_height()
 
-        item["width_percent"] = image_width / rendered_pdf_width
-        item["height_percent"] = image_height / rendered_pdf_height
+        item["width_percent"] = image_width / self.rendered_background_width
+        item["height_percent"] = image_height / self.rendered_pdf_height
 
-    def start_drag(self, event):
-        return
+    def start_action(self, event, item):
+        x, y = event.x, event.y
+        width = item["panel"].winfo_width()
+        height = item["panel"].winfo_height()
+        border = 10  # How many pixels near an edge to consider resizing.
+
+        # Determine if click is near an edge based on mouse relative position.
+        if x >= width - border and y >= height - border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "bottom-right"  # Resize from bottom-right corner
+        elif x >= width - border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "right"
+        elif y >= height - border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "bottom"
+        else:
+            item["is_resizing"] = False
+
+    def do_action(self, event, item):
+        if item["is_resizing"]:
+            self.do_resize(event, item)
+        else:
+            self.do_drag(event, item)
+
+    def do_resize(self, event, item):
+        if item["resize_edge"] == "bottom":
+            dy = event.y - item["panel"].winfo_height()
+            new_height = item["panel"].winfo_height() + dy
+            item["image"].configure(size=(item["panel"].winfo_width(), new_height))
+            self.image_frame.configure(cursor="sb_down_arrow")
+        elif item["resize_edge"] == "right":
+            dx = event.x - item["panel"].winfo_width()
+            new_width = item["panel"].winfo_width() + dx
+            item["image"].configure(size=(new_width, item["panel"].winfo_height()))
+            self.image_frame.configure(cursor="sb_right_arrow")
+        elif item["resize_edge"] == "bottom-right":
+            dx = event.x - item["panel"].winfo_width()
+            new_width = item["panel"].winfo_width() + dx
+            new_height = item["panel"].winfo_height() + dx
+            item["image"].configure(size=(new_width, new_height))
+            self.image_frame.configure(cursor="sizing")
+
+    def stop_action(self, event, item):
+        self.calulate_relation(item)
+        self.image_frame.configure(cursor="")
 
     def do_drag(self, event, item):
         image_position_x = item["panel"].winfo_x()
@@ -222,7 +278,6 @@ class MyGui:
 
         # Move the draggable image
         item["panel"].place(x=new_x, y=new_y, anchor="center")
-        self.calulate_relation(item)
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
