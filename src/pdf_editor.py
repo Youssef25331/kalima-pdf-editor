@@ -6,6 +6,18 @@ from fpdf import FPDF
 from pathlib import Path
 
 
+def setup_temp_dir():
+    temp_dir = Path(__file__).parent / "Temp"
+    temp_dir.mkdir(exist_ok=True)
+    return temp_dir
+
+
+temp_dir = setup_temp_dir()
+temp_pdf = temp_dir / "Temp.pdf"
+temp_loop_pdf = temp_dir / "Loop.pdf"
+temp_background = temp_dir / "Temp.png"
+
+
 def hex_to_rgb(hex_color):
     # Convert a HEX color string (e.g., 'FF0000') to an RGB tuple.
     hex_color = hex_color.lstrip("#")  # Remove optional '#'
@@ -28,7 +40,7 @@ def load_project_fonts():
 
 
 def resize_and_save_image(
-    input_path, output_path, opacity, width, height=None, bg_color=None
+    input_path, opacity, width, height=None, bg_color=None, output_path=temp_pdf
 ):
     # Resize an image to a specified width and save it with an optional background color.
     try:
@@ -63,17 +75,17 @@ def resize_and_save_image(
 def create_text_pdf(
     text,
     dimensions,
-    output_path,
     text_color="000000",
     bg_color=None,
     font_family="helvetica",
     font_size=None,
+    output_path=temp_pdf,
 ):
     # Create a PDF with text at specified dimensions, with optional text and background colors.
     pdf = FPDF("P", "pt", dimensions)
     pdf.set_margins(0, 0)
     pdf.set_auto_page_break(False)
-    pdf.add_page()  
+    pdf.add_page()
 
     text_rgb = hex_to_rgb(text_color)
     pdf.set_text_color(*text_rgb)
@@ -114,7 +126,7 @@ def create_text_pdf(
 
 
 # converts a page to a PNG to be loaded in GUI
-def convert_pdf_page(pdf_path, page_number):
+def convert_pdf_page(pdf_path, page_number, output):
     try:
         # Convert specific page to image
         images = convert_from_path(
@@ -126,7 +138,7 @@ def convert_pdf_page(pdf_path, page_number):
         )
 
         if images:
-            images[0].save("temp_pdf.png", "PNG")
+            images[0].save(output, "PNG")
             print(f"Successfully converted page {page_number} to temp_pdf.png")
 
             return PdfReader(pdf_path).get_num_pages()
@@ -159,11 +171,11 @@ def percentage_converter(pdf_path, dimensions, location):
 
 def merge_pdfs(
     base_pdf_path,
-    overlay_pdf_path,
     output_path,
     overlay_height,
     start_loc=(0, 0),
     exclude_pages=None,
+    overlay_pdf_path=temp_pdf,
 ):
     # Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages.
     exclude_pages = exclude_pages or []

@@ -40,6 +40,7 @@ class MyGui:
         self.exclusion_list = []
         self.editing_items = []
         self.current_item = -1
+        self.pdf_window.bind("<Delete>", self.delete_item)
 
         # The side panel with differnt tools
         self.side_panel = ct.CTkFrame(self.pdf_window, width=200, height=600)
@@ -153,6 +154,14 @@ class MyGui:
         self.pdf_window.grab_set()
         self.pdf_window.mainloop()
 
+    def delete_item(self, event):
+        print(self.current_item)
+        if self.current_item >= 0:
+            item = self.editing_items[self.current_item]
+            item["panel"].destroy()
+            item = {"deleted": True}
+            self.current_item = -1
+
     def set_exclusion(self):
         input_text = self.exclusion_entry.get()
         try:
@@ -212,9 +221,9 @@ class MyGui:
             item["panel"].configure(text_color=color)
             item["text_color"] = color
 
-    def set_background(self, image_location="temp_pdf.png"):
+    def set_background(self, image_location="Temp/temp_background.png"):
         self.pdf_page_count = pdf_editor.convert_pdf_page(
-            self.pdf, self.current_page_number
+            self.pdf, self.current_page_number, image_location
         )
         self.base_pdf = Image.open(image_location)
         self.background_image = ct.CTkImage(
@@ -235,40 +244,44 @@ class MyGui:
             self.set_background()
 
     def convert_pdf(self):
+        save_path = ct.filedialog.asksaveasfilename(
+            initialdir=Path.cwd(),  # Start in current working directory
+            defaultextension=".pdf",  # Auto-add .pdf if missing
+            filetypes=[("PDF Files", "*.pdf")],  # Restrict to PDF
+            initialfile="output.pdf",  # Suggest a default name
+        )
         for item in self.editing_items:
-            item_translations = pdf_editor.percentage_converter(
-                self.pdf,
-                (item["width_percent"], item["height_percent"]),
-                (item["relative_x"], item["relative_y"]),
-            )
-            if "image" in item:
-                pdf_editor.resize_and_save_image(
-                    item["image_location"],
-                    "temp.pdf",
-                    item["opacity"],
-                    item_translations[0][0],
+            if "deleted" not in item:
+                item_translations = pdf_editor.percentage_converter(
+                    self.pdf,
+                    (item["width_percent"], item["height_percent"]),
+                    (item["relative_x"], item["relative_y"]),
+                )
+                if "image" in item:
+                    pdf_editor.resize_and_save_image(
+                        item["image_location"],
+                        item["opacity"],
+                        item_translations[0][0],
+                        item_translations[0][1],
+                        item["panel"]._fg_color,
+                    )
+                else:
+                    pdf_editor.create_text_pdf(
+                        item["text"],
+                        (item_translations[0][0], item_translations[0][1]),
+                        bg_color=item["bg_color"],
+                        text_color=item["text_color"],
+                        font_family=item["font_family"],
+                        font_size=item["font_size"],
+                    )
+                pdf_editor.merge_pdfs(
+                    self.pdf,
+                    save_path,
                     item_translations[0][1],
-                    item["panel"]._fg_color,
+                    item_translations[1],
+                    self.exclusion_list,
                 )
-            else:
-                pdf_editor.create_text_pdf(
-                    item["text"],
-                    (item_translations[0][0], item_translations[0][1]),
-                    "temp.pdf",
-                    bg_color=item["bg_color"],
-                    text_color=item["text_color"],
-                    font_family=item["font_family"],
-                    font_size=item["font_size"],
-                )
-            pdf_editor.merge_pdfs(
-                self.pdf,
-                "temp.pdf",
-                "output.pdf",
-                item_translations[0][1],
-                item_translations[1],
-                self.exclusion_list,
-            )
-            return
+                return
 
     def add_image(self):
         loaded_logo = ct.filedialog.askopenfilename(
@@ -311,8 +324,8 @@ class MyGui:
             "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
         )
         self.calulate_relative_dimensions(item)
-
         self.editing_items.append(item)
+        self.current_item = item["index"]
 
     def add_text(self):
         drag_panel = ct.CTkLabel(
@@ -355,6 +368,7 @@ class MyGui:
         self.calulate_relative_dimensions(item)
 
         self.editing_items.append(item)
+        self.current_item = item["index"]
 
     # A function to calculate all the required relative numbers for the conversion.
     def calulate_relative_dimensions(self, item):
