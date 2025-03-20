@@ -36,6 +36,7 @@ class MyGui:
         self.pdf_window.geometry("700x600")
         self.pdf_window.title("PDF Editor")
         self.pdf_window.minsize(600, 600)
+        self.exclusion_list = []
         self.editing_items = []
         self.current_item = -1
 
@@ -102,12 +103,25 @@ class MyGui:
         )
         self.text_color_button.pack(pady=10)
 
+        self.exclusion_entry = ct.CTkEntry(
+            master=self.side_panel,
+            placeholder_text="10,14,30....",
+            width=150,
+        )
+        self.exclusion_entry.pack(pady=5)
+
+        self.exlusion_submit = ct.CTkButton(
+            master=self.side_panel, text="Submit", command=self.set_exclusion
+        )
+        self.exlusion_submit.pack(pady=5)
+
         self.submit_button = ct.CTkButton(
             master=self.side_panel,
             text="Convert",
             height=20,
             command=self.convert_pdf,
         )
+
         self.submit_button.pack(pady=40, anchor="s")
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
@@ -124,6 +138,17 @@ class MyGui:
         # Optional: Disable the main window while the new one is open
         self.pdf_window.grab_set()
         self.pdf_window.mainloop()
+
+    def set_exclusion(self):
+        input_text = self.exclusion_entry.get()
+        try:
+            values = [int(x.strip()) for x in input_text.split(",") if x.strip()]
+            if values:  # Ensure list isn’t empty
+                self.exclusion_list = values
+            else:
+                print("No values entered!")
+        except ValueError:
+            print("Invalid input - use numbers like '1, 2, 3, 4'!")
 
     def bg_color_picker(self):
         pick_color = CTkColorPicker.AskColor()
@@ -205,7 +230,7 @@ class MyGui:
             "output.pdf",
             image_translations[0][1],
             image_translations[1],
-            [1],
+            self.exclusion_list,
         )
         return
 
