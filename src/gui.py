@@ -1,5 +1,6 @@
 import customtkinter as ct
 import CTkColorPicker
+from tkinter import font
 import math
 from PIL import Image
 import pdf_editor
@@ -69,14 +70,17 @@ class MyGui:
         )
         self.text_button.pack(pady=10, anchor="center")
 
-        self.submit_button = ct.CTkButton(
+        self.font_menu = ct.CTkOptionMenu(
             master=self.side_panel,
-            text="Convert",
-            height=20,
-            command=self.convert_pdf,
+            values=list(font.families()),
+            command=self.font_family_picker,
         )
-
-        self.submit_button.pack(pady=40, anchor="s")
+        self.font_menu.pack(pady=5)
+        self.font_slider = ct.CTkSlider(
+            master=self.side_panel, from_=0, to=100, command=self.font_size_picker
+        )
+        self.font_slider.set(12)
+        self.font_slider.pack(pady=10)
 
         self.opacity_slider = ct.CTkSlider(
             master=self.side_panel, from_=0, to=1, command=self.opacity_picker
@@ -84,10 +88,27 @@ class MyGui:
         self.opacity_slider.set(1)
         self.opacity_slider.pack(pady=10)
 
-        self.color_button = ct.CTkButton(
-            master=self.side_panel, text="Pick Color", command=self.color_picker
+        self.bg_color_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Pick Background Color",
+            command=self.bg_color_picker,
         )
-        self.color_button.pack(pady=10)
+        self.bg_color_button.pack(pady=10)
+
+        self.text_color_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Pick Text Color",
+            command=self.text_color_picker,
+        )
+        self.text_color_button.pack(pady=10)
+
+        self.submit_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Convert",
+            height=20,
+            command=self.convert_pdf,
+        )
+        self.submit_button.pack(pady=40, anchor="s")
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
@@ -104,18 +125,39 @@ class MyGui:
         self.pdf_window.grab_set()
         self.pdf_window.mainloop()
 
-    def color_picker(self):
+    def bg_color_picker(self):
         pick_color = CTkColorPicker.AskColor()
         color = pick_color.get()
         if color:
             item = self.editing_items[self.current_item]
-            self.color_button.configure(fg_color=color)
+            self.bg_color_button.configure(fg_color=color)
             item["panel"].configure(fg_color=color)
             item["bg_color"] = color
 
     def opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["opacity"] = round(value, 1)
+
+    def font_family_picker(self, font):
+        item = self.editing_items[self.current_item]
+        if "text" in item:
+            item["panel"].configure(font=(font, 12))
+            item["font_family"] = font
+
+    def font_size_picker(self, value):
+        item = self.editing_items[self.current_item]
+        if "text" in item:
+            item["panel"].configure(font=(item["font_family"], value))
+            item["font_size"] = value
+
+    def text_color_picker(self):
+        pick_color = CTkColorPicker.AskColor()
+        color = pick_color.get()
+        item = self.editing_items[self.current_item]
+        if color and "text" in item:
+            self.bg_color_button.configure(fg_color=color)
+            item["panel"].configure(text_color=color)
+            item["text_color"] = color
 
     def set_background(self, image_location="temp_pdf.png"):
         self.pdf_page_count = pdf_editor.convert_pdf_page(
@@ -198,6 +240,7 @@ class MyGui:
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#FFFFFF",
+            "text_color": "000000",
             "opacity": 1,
         }
         print(item["index"])
@@ -227,6 +270,8 @@ class MyGui:
             "type": "text",
             "text": "this is a text",
             "panel": drag_panel,
+            "font_family": "ariel",
+            "font_size": "12",
             "x": 0,
             "y": 0,
             "is_resizing": False,
