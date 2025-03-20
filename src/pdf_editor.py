@@ -12,7 +12,9 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
-def resize_and_save_image(input_path, output_path, width, height=None, bg_color=None):
+def resize_and_save_image(
+    input_path, output_path, opacity, width, height=None, bg_color=None
+):
     # Resize an image to a specified width and save it with an optional background color.
     try:
         img = Image.open(input_path).convert("RGBA")
@@ -26,12 +28,12 @@ def resize_and_save_image(input_path, output_path, width, height=None, bg_color=
             math.floor(img.height * height_percentage),
         )
         img = img.resize(size, Image.Resampling.LANCZOS)  # Better quality resizing
-        print(size)
 
         if bg_color:
             bg_rgb = hex_to_rgb(bg_color)
             background = Image.new("RGBA", size, bg_rgb + (255,))  # Add alpha channel
             background.paste(img, (0, 0), mask=img)
+            background.putalpha(int(255 * opacity))
             background.save(output_path, "PDF")
         else:
             img.save(output_path, "PDF")
@@ -119,8 +121,8 @@ def percentage_converter(pdf_path, dimensions, location):
 
     # In my testing this formula was the most accurate to what the user sees.
     converted_location = (
-        math.floor(pdf.pages[0].mediabox[2] * location[0]) - 1,
-        math.floor(pdf.pages[0].mediabox[3] * location[1]) - 1,
+        math.floor(pdf.pages[0].mediabox[2] * location[0]),
+        math.floor(pdf.pages[0].mediabox[3] * location[1]),
     )
     print([converted_dimensions, converted_location])
     return [converted_dimensions, converted_location]

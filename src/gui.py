@@ -35,6 +35,8 @@ class MyGui:
         self.pdf_window.geometry("700x600")
         self.pdf_window.title("PDF Editor")
         self.pdf_window.minsize(600, 600)
+        self.editing_items = []
+        self.current_item = -1
 
         # The side panel with differnt tools
         self.side_panel = ct.CTkFrame(self.pdf_window, width=200, height=600)
@@ -68,6 +70,12 @@ class MyGui:
 
         self.submit_button.pack(pady=40, anchor="s")
 
+        self.opacity_slider = ct.CTkSlider(
+            master=self.side_panel, from_=0, to=1, command=self.opacity_picker
+        )
+        self.opacity_slider.set(1)
+        self.opacity_slider.pack(pady=10)
+
         self.color_button = ct.CTkButton(
             master=self.side_panel, text="Pick Color", command=self.color_picker
         )
@@ -83,7 +91,6 @@ class MyGui:
         # Actions after initalization
 
         self.set_background()
-        self.editing_items = []
 
         # Optional: Disable the main window while the new one is open
         self.pdf_window.grab_set()
@@ -93,7 +100,15 @@ class MyGui:
         pick_color = CTkColorPicker.AskColor()
         color = pick_color.get()
         if color:
+            item = self.editing_items[self.current_item]
             self.color_button.configure(fg_color=color)
+            item["panel"].configure(fg_color=color)
+            item["bg_color"] = color
+
+    def opacity_picker(self, value):
+        item = self.editing_items[self.current_item]
+        item["opacity"] = round(value, 1)
+        print(item["opacity"])
 
     def set_background(self, image_location="temp_pdf.png"):
         self.pdf_page_count = pdf_editor.convert_pdf_page(
@@ -121,7 +136,7 @@ class MyGui:
             self.set_background()
 
     def convert_pdf(self):
-        item = self.editing_items[0]
+        item = self.editing_items[self.current_item]
         image_translations = pdf_editor.percentage_converter(
             self.pdf,
             (item["width_percent"], item["height_percent"]),
@@ -130,6 +145,7 @@ class MyGui:
         pdf_editor.resize_and_save_image(
             item["image_location"],
             "temp.pdf",
+            item["opacity"],
             image_translations[0][0],
             image_translations[0][1],
             item["panel"]._fg_color,
@@ -160,6 +176,7 @@ class MyGui:
         )
         drag_panel.place(x=0, y=0)
         item = {
+            "index": len(self.editing_items),
             "image_location": loaded_logo,
             "image": overlay_image,
             "panel": drag_panel,
@@ -173,7 +190,10 @@ class MyGui:
             "relative_y": 0,
             "width_percent": 0,
             "height_percent": 0,
+            "bg_color": "#FFFFFF",
+            "opacity": 1,
         }
+        print(item["index"])
 
         drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))
         drag_panel.bind("<B1-Motion>", lambda event: self.do_action(event, item))
@@ -211,6 +231,7 @@ class MyGui:
         item["height_percent"] = image_height / self.rendered_pdf_height
 
     def start_action(self, event, item):
+        self.current_item = item["index"]
         x, y = event.x, event.y
         width = item["panel"].winfo_width()
         height = item["panel"].winfo_height()
@@ -241,6 +262,7 @@ class MyGui:
             new_height = item["panel"].winfo_height() + dy
             item["image"].configure(size=(item["panel"].winfo_width(), new_height))
             self.image_frame.configure(cursor="sb_down_arrow")
+            new_y = item["panel"].winfo_y()
         elif item["resize_edge"] == "right":
             dx = event.x - item["panel"].winfo_width()
             new_width = item["panel"].winfo_width() + dx
@@ -261,7 +283,6 @@ class MyGui:
         image_position_x = item["panel"].winfo_x()
         image_position_y = item["panel"].winfo_y()
 
-        item["panel"].configure(fg_color="#000000")
         # Calculate the new position
         new_x = image_position_x + event.x
         new_y = image_position_y + event.y
