@@ -12,6 +12,21 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
+# For importing fonts into FPDF
+def load_project_fonts():
+    # Define the "fonts" folder relative to the project root
+    font_dir = Path(__file__).parent / "Fonts"  # Assumes script is in project root
+    fonts = []
+    if not font_dir.exists():
+        font_dir.mkdir()
+        print("Created 'Fonts' folder. Make sure to add fonts.")
+        return ["Ariel", "Helvatica"]
+    for font_path in font_dir.glob("*.ttf"):
+        font_name = font_path.stem.capitalize()
+        fonts.append((font_name, font_path))
+    return fonts
+
+
 def resize_and_save_image(
     input_path, output_path, opacity, width, height=None, bg_color=None
 ):
@@ -46,9 +61,15 @@ def resize_and_save_image(
 
 
 def create_text_pdf(
-    text, dimensions, output_path, text_color="000000", bg_color=None, font="helvetica"
+    text,
+    dimensions,
+    output_path,
+    text_color="000000",
+    bg_color=None,
+    font_family="helvetica",
+    font_size=None,
 ):
-    """Create a PDF with text at specified dimensions, with optional text and background colors."""
+    # Create a PDF with text at specified dimensions, with optional text and background colors.
     pdf = FPDF("P", "pt", dimensions)
     pdf.set_margins(0, 0)
     pdf.set_auto_page_break(False)
@@ -56,6 +77,12 @@ def create_text_pdf(
 
     text_rgb = hex_to_rgb(text_color)
     pdf.set_text_color(*text_rgb)
+    fonts = load_project_fonts()
+    for font_name, font_path in fonts:
+        pdf.add_font(font_name, "", str(font_path), uni=True)
+
+    if not font_size:
+        font_size = int(dimensions[0] * 0.09)
 
     if bg_color:
         bg_rgb = hex_to_rgb(bg_color)
@@ -64,8 +91,8 @@ def create_text_pdf(
             0, 0, 9999, 9999, style="F"
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
 
-    pdf.set_font(font, size=int(dimensions[0] * 0.09))
-    pdf.multi_cell(0, 22, txt=text, align="C", border=0)
+    pdf.set_font(font_family, size=font_size)
+    pdf.multi_cell(dimensions[0], dimensions[1], txt=text, align="C", border=0)
     pdf.output(output_path)
 
 

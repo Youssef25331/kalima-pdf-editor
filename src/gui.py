@@ -1,6 +1,7 @@
 import customtkinter as ct
 import CTkColorPicker
-from tkinter import font
+
+# from tkinter import font
 import math
 from PIL import Image
 import pdf_editor
@@ -73,7 +74,8 @@ class MyGui:
 
         self.font_menu = ct.CTkOptionMenu(
             master=self.side_panel,
-            values=list(font.families()),
+            # values=list(font.families()),
+            values=self.load_fonts(),
             command=self.font_family_picker,
         )
         self.font_menu.pack(pady=5)
@@ -150,6 +152,13 @@ class MyGui:
         except ValueError:
             print("Invalid input - use numbers like '1, 2, 3, 4'!")
 
+    def load_fonts(self):
+        fonts = pdf_editor.load_project_fonts()
+        active_fonts = []
+        for font in fonts:
+            active_fonts.append(font[0])
+        return active_fonts
+
     def bg_color_picker(self):
         pick_color = CTkColorPicker.AskColor()
         color = pick_color.get()
@@ -180,7 +189,7 @@ class MyGui:
         color = pick_color.get()
         item = self.editing_items[self.current_item]
         if color and "text" in item:
-            self.bg_color_button.configure(fg_color=color)
+            self.text_color_button.configure(fg_color=color)
             item["panel"].configure(text_color=color)
             item["text_color"] = color
 
@@ -211,25 +220,35 @@ class MyGui:
 
     def convert_pdf(self):
         item = self.editing_items[self.current_item]
-        image_translations = pdf_editor.percentage_converter(
+        item_translations = pdf_editor.percentage_converter(
             self.pdf,
             (item["width_percent"], item["height_percent"]),
             (item["relative_x"], item["relative_y"]),
         )
-        pdf_editor.resize_and_save_image(
-            item["image_location"],
-            "temp.pdf",
-            item["opacity"],
-            image_translations[0][0],
-            image_translations[0][1],
-            item["panel"]._fg_color,
-        )
+        if "image" in item:
+            pdf_editor.resize_and_save_image(
+                item["image_location"],
+                "temp.pdf",
+                item["opacity"],
+                item_translations[0][0],
+                item_translations[0][1],
+                item["panel"]._fg_color,
+            )
+        else:
+            pdf_editor.create_text_pdf(
+                item["text"],
+                (item_translations[0][0], item_translations[0][1]),
+                "temp.pdf",
+                bg_color=item["bg_color"],
+                font_family=item["font_family"],
+                font_size=item["font_size"],
+            )
         pdf_editor.merge_pdfs(
             self.pdf,
             "temp.pdf",
             "output.pdf",
-            image_translations[0][1],
-            image_translations[1],
+            item_translations[0][1],
+            item_translations[1],
             self.exclusion_list,
         )
         return
@@ -275,7 +294,7 @@ class MyGui:
         drag_panel.bind(
             "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
         )
-        self.calulate_relation(item)
+        self.calulate_relative_dimensions(item)
 
         self.editing_items.append(item)
 
@@ -288,6 +307,7 @@ class MyGui:
             width=120,
             height=120,
             anchor="center",
+            font=("Arial", 12),
         )
         drag_panel.place(anchor="center")
         item = {
@@ -295,8 +315,8 @@ class MyGui:
             "type": "text",
             "text": "this is a text",
             "panel": drag_panel,
-            "font_family": "ariel",
-            "font_size": "12",
+            "font_family": "Arial",
+            "font_size": 12,
             "x": 0,
             "y": 0,
             "is_resizing": False,
@@ -315,12 +335,12 @@ class MyGui:
         drag_panel.bind(
             "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
         )
-        self.calulate_relation(item)
+        self.calulate_relative_dimensions(item)
 
         self.editing_items.append(item)
 
     # A function to calculate all the required relative numbers for the conversion.
-    def calulate_relation(self, item):
+    def calulate_relative_dimensions(self, item):
         image_width = item["panel"].winfo_width()
         image_height = item["panel"].winfo_height()
         image_position_x = item["panel"].winfo_x()
@@ -394,7 +414,7 @@ class MyGui:
             item["panel"].configure(width=new_width, height=new_height)
 
     def stop_action(self, event, item):
-        self.calulate_relation(item)
+        self.calulate_relative_dimensions(item)
         self.image_frame.configure(cursor="")
 
     def do_drag(self, event, item):
