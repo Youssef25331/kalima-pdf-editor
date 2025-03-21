@@ -46,6 +46,14 @@ class MyGui:
         self.side_panel = ct.CTkFrame(self.pdf_window, width=200, height=600)
         self.side_panel.pack(side="left", fill="y", padx=10, pady=10)
 
+        self.bg_color_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Pick Background Color",
+            command=self.bg_color_picker,
+        )
+        self.setup_text_buttons()
+        self.setup_images_buttons()
+
         # setup page movment
         self.current_page_number = 1
         self.button1 = ct.CTkButton(
@@ -73,51 +81,6 @@ class MyGui:
         )
         self.text_button.pack(pady=10, anchor="center")
 
-        self.font_menu = ct.CTkOptionMenu(
-            master=self.side_panel,
-            # values=list(font.families()),
-            values=self.load_fonts(),
-            command=self.font_family_picker,
-        )
-        self.font_menu.pack(pady=5)
-        self.font_slider = ct.CTkSlider(
-            master=self.side_panel, from_=0, to=100, command=self.font_size_picker
-        )
-        self.font_slider.set(12)
-        self.font_slider.pack(pady=10)
-
-        self.opacity_slider = ct.CTkSlider(
-            master=self.side_panel, from_=0, to=1, command=self.opacity_picker
-        )
-        self.opacity_slider.set(1)
-        self.opacity_slider.pack(pady=10)
-
-        self.bg_color_button = ct.CTkButton(
-            master=self.side_panel,
-            text="Pick Background Color",
-            command=self.bg_color_picker,
-        )
-        self.bg_color_button.pack(pady=10)
-
-        self.text_color_button = ct.CTkButton(
-            master=self.side_panel,
-            text="Pick Text Color",
-            command=self.text_color_picker,
-        )
-        self.text_color_button.pack(pady=10)
-
-        self.text_entry = ct.CTkEntry(
-            master=self.side_panel,
-            placeholder_text="Input text",
-            width=150,
-        )
-        self.text_entry.pack(pady=5)
-
-        self.text_submit = ct.CTkButton(
-            master=self.side_panel, text="Submit", command=self.set_text
-        )
-        self.text_submit.pack(pady=5)
-
         self.exclusion_entry = ct.CTkEntry(
             master=self.side_panel,
             placeholder_text="10,14,30....",
@@ -141,7 +104,7 @@ class MyGui:
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-        self.background_panel = ct.CTkLabel(self.image_frame,text="")
+        self.background_panel = ct.CTkLabel(self.image_frame, text="")
 
         # Bind the resize event to the image frame (not the whole window)
         self.image_frame.bind("<Configure>", self.resize_image)
@@ -154,13 +117,77 @@ class MyGui:
         self.pdf_window.grab_set()
         self.pdf_window.mainloop()
 
+    def setup_images_buttons(self):
+        self.opacity_slider = ct.CTkSlider(
+            master=self.side_panel, from_=0, to=1, command=self.opacity_picker
+        )
+
+    def setup_text_buttons(self):
+        self.opacity_slider = ct.CTkSlider(
+            master=self.side_panel, from_=0, to=1, command=self.opacity_picker
+        )
+        self.font_menu = ct.CTkOptionMenu(
+            master=self.side_panel,
+            # values=list(font.families()),
+            values=self.load_fonts(),
+            command=self.font_family_picker,
+        )
+
+        self.font_slider = ct.CTkSlider(
+            master=self.side_panel, from_=0, to=100, command=self.font_size_picker
+        )
+
+        self.text_color_button = ct.CTkButton(
+            master=self.side_panel,
+            text="Pick Text Color",
+            command=self.text_color_picker,
+        )
+
+        self.text_entry = ct.CTkEntry(
+            master=self.side_panel,
+            placeholder_text="Input text",
+            width=150,
+        )
+
+        self.text_submit = ct.CTkButton(
+            master=self.side_panel, text="Submit", command=self.set_text
+        )
+
+    def update_side_panel(self):
+        if self.current_item != -1:
+            item = self.editing_items[self.current_item]
+            self.bg_color_button.configure(fg_color=item["bg_color"])
+            self.bg_color_button.pack(pady=10)
+            if "text" in item:
+                self.opacity_slider.pack_forget()
+                self.font_slider.set(item["font_size"])
+                self.font_slider.pack(pady=10)
+                self.text_color_button.pack(pady=10)
+                self.text_color_button.configure(fg_color=item["text_color"])
+                self.text_entry.pack(pady=5)
+                self.text_submit.pack(pady=5)
+            else:
+                self.font_slider.pack_forget()
+                self.text_color_button.pack_forget()
+                self.text_entry.pack_forget()
+                self.text_submit.pack_forget()
+                self.opacity_slider.pack(pady=10)
+                self.opacity_slider.set(item["opacity"])
+        else:
+            self.opacity_slider.pack_forget()
+            self.font_slider.pack_forget()
+            self.text_color_button.pack_forget()
+            self.text_entry.pack_forget()
+            self.text_submit.pack_forget()
+            self.bg_color_button.pack_forget()
+
     def delete_item(self, event):
-        print(self.current_item)
         if self.current_item >= 0:
             item = self.editing_items[self.current_item]
             item["panel"].destroy()
             item = {"index": item["index"], "deleted": True}
-            self.current_item = -1
+        self.current_item = -1
+        self.update_side_panel()
 
     def set_exclusion(self):
         input_text = self.exclusion_entry.get()
@@ -330,6 +357,7 @@ class MyGui:
         self.calulate_relative_dimensions(item)
         self.editing_items.append(item)
         self.current_item = item["index"]
+        self.update_side_panel()
 
     def add_text(self):
         drag_panel = ct.CTkLabel(
@@ -362,7 +390,7 @@ class MyGui:
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#FFFFFF",
-            "text_color": "000000",
+            "text_color": "#000000",
             "opacity": 1,
         }
         drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))
@@ -374,6 +402,7 @@ class MyGui:
 
         self.editing_items.append(item)
         self.current_item = item["index"]
+        self.update_side_panel()
 
     # A function to calculate all the required relative numbers for the conversion.
     def calulate_relative_dimensions(self, item):
@@ -408,6 +437,7 @@ class MyGui:
 
     def start_action(self, event, item):
         self.current_item = item["index"]
+        self.update_side_panel()
         x, y = event.x, event.y
         width = item["panel"].winfo_width()
         height = item["panel"].winfo_height()
