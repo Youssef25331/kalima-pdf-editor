@@ -4,6 +4,8 @@ from pdf2image import convert_from_path
 from PIL import Image
 from fpdf import FPDF
 from pathlib import Path
+import arabic_reshaper
+from bidi.algorithm import get_display
 
 
 def setup_temp_dir():
@@ -95,6 +97,8 @@ def create_text_pdf(
     pdf.add_page()
 
     text_rgb = hex_to_rgb(text_color)
+    reshaped_text = arabic_reshaper.reshape(text)  # Connects letters
+    normalized_text = get_display(reshaped_text)
     pdf.set_text_color(*text_rgb)
     fonts = load_project_fonts()
     for font_name, font_path in fonts:
@@ -114,7 +118,7 @@ def create_text_pdf(
     pdf.cell(
         dimensions[0],
         dimensions[1],
-        txt=text,
+        txt=normalized_text,
         align="C",
         ln=0,
         border=0,

@@ -99,15 +99,15 @@ class MyGui:
             height=20,
             command=self.convert_pdf,
         )
-
         self.submit_button.pack(pady=40, anchor="s")
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
         self.background_panel = ct.CTkLabel(self.image_frame, text="")
 
-        # Bind the resize event to the image frame (not the whole window)
+        # Bind the resize event to the image frame (not the whole window).
         self.image_frame.bind("<Configure>", self.resize_image)
+
         self.resize_id = None
         self.pdf_window.bind("<Configure>", self.debouce_update)
 
@@ -162,6 +162,7 @@ class MyGui:
             self.bg_color_button.pack(pady=10)
             if "text" in item:
                 self.opacity_slider.pack_forget()
+                self.font_menu.pack(pady=10)
                 self.font_slider.set(item["font_size"])
                 self.font_slider.pack(pady=10)
                 self.text_color_button.pack(pady=10)
@@ -187,7 +188,10 @@ class MyGui:
         if self.current_item >= 0:
             item = self.editing_items[self.current_item]
             item["panel"].destroy()
-            self.editing_items[self.current_item] = {"index": item["index"], "deleted": True}
+            self.editing_items[self.current_item] = {
+                "index": item["index"],
+                "deleted": True,
+            }
         self.current_item = -1
         self.update_side_panel()
 
@@ -364,7 +368,7 @@ class MyGui:
     def add_text(self):
         drag_panel = ct.CTkLabel(
             self.background_panel,
-            text="This is a text",
+            text="Your text",
             text_color="#000000",
             fg_color="#FFFFFF",
             width=120,
@@ -376,7 +380,7 @@ class MyGui:
         item = {
             "index": len(self.editing_items),
             "type": "text",
-            "text": "this is a text",
+            "text": "Your text",
             "panel": drag_panel,
             "font_family": "Arial",
             "font_size": 12,
@@ -538,9 +542,7 @@ class MyGui:
         if len(self.editing_items):
             for item in self.editing_items:
                 if "deleted" not in item:
-                    print(item)
                     self.calulate_relative_dimensions(item)
-                    print(item)
 
 
 root = ct.CTk()
