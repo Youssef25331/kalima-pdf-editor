@@ -3,6 +3,7 @@ from pypdf import PdfReader, PdfWriter
 from pdf2image import convert_from_path
 from PIL import Image
 from fpdf import FPDF
+from fontTools.ttLib import TTFont
 from pathlib import Path
 import arabic_reshaper
 from bidi.algorithm import get_display
@@ -43,10 +44,11 @@ def load_project_fonts():
         print("Created 'Fonts' folder. Make sure to add fonts.")
         return ["Ariel", "Helvatica"]
     for font_path in font_dir.glob("*.ttf"):
-        font_name = font_path.stem.capitalize()
-        fonts.append((font_name, font_path))
+        font_name = Path(font_path)
+        font = TTFont(font_path)
+        font_name = font["name"].getDebugName(4)
+        fonts.append((font_name, font_path, font_path))
     return fonts
-
 
 def resize_and_save_image(
     input_path, opacity, width, height=None, bg_color=None, output_path=temp_pdf
@@ -101,7 +103,7 @@ def create_text_pdf(
     normalized_text = get_display(reshaped_text)
     pdf.set_text_color(*text_rgb)
     fonts = load_project_fonts()
-    for font_name, font_path in fonts:
+    for font_name, font_path, _ in fonts:
         pdf.add_font(font_name, "", str(font_path), uni=True)
 
     if not font_size:

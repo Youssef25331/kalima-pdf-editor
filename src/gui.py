@@ -1,8 +1,5 @@
 import customtkinter as ct
 import CTkColorPicker
-
-# from tkinter import font
-import math
 from PIL import Image
 import pdf_editor
 from pathlib import Path
@@ -207,10 +204,11 @@ class MyGui:
             print("Invalid input - use numbers like '1, 2, 3, 4'!")
 
     def load_fonts(self):
-        fonts = pdf_editor.load_project_fonts()
         active_fonts = []
+        fonts = pdf_editor.load_project_fonts()
         for font in fonts:
             active_fonts.append(font[0])
+            ct.FontManager.load_font(str(font[2]))
         return active_fonts
 
     def set_text(self):
