@@ -159,7 +159,7 @@ class MyGui:
         if self.current_item >= 0:
             item = self.editing_items[self.current_item]
             item["panel"].destroy()
-            item = {"deleted": True}
+            item = {"index": item["index"], "deleted": True}
             self.current_item = -1
 
     def set_exclusion(self):
@@ -245,12 +245,16 @@ class MyGui:
 
     def convert_pdf(self):
         save_path = ct.filedialog.asksaveasfilename(
-            initialdir=Path.cwd(),  # Start in current working directory
-            defaultextension=".pdf",  # Auto-add .pdf if missing
-            filetypes=[("PDF Files", "*.pdf")],  # Restrict to PDF
-            initialfile="output.pdf",  # Suggest a default name
+            initialdir=Path.cwd(),
+            defaultextension=".pdf",
+            filetypes=[("PDF Files", "*.pdf")],
+            initialfile="output.pdf",
         )
+        pdf_editor.setup_loop_file(self.pdf)
         for item in self.editing_items:
+            is_final = False
+            if item["index"] == len(self.editing_items) - 1:
+                is_final = True
             if "deleted" not in item:
                 item_translations = pdf_editor.percentage_converter(
                     self.pdf,
@@ -275,13 +279,12 @@ class MyGui:
                         font_size=item["font_size"],
                     )
                 pdf_editor.merge_pdfs(
-                    self.pdf,
                     save_path,
                     item_translations[0][1],
+                    is_final,
                     item_translations[1],
                     self.exclusion_list,
                 )
-                return
 
     def add_image(self):
         loaded_logo = ct.filedialog.askopenfilename(

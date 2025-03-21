@@ -1,4 +1,4 @@
-import math
+import math, os
 from pypdf import PdfReader, PdfWriter
 from pdf2image import convert_from_path
 from PIL import Image
@@ -16,6 +16,13 @@ temp_dir = setup_temp_dir()
 temp_pdf = temp_dir / "Temp.pdf"
 temp_loop_pdf = temp_dir / "Loop.pdf"
 temp_background = temp_dir / "Temp.png"
+
+
+def setup_loop_file(source_file, dest_file=temp_loop_pdf):
+    os.makedirs(dest_file.parent, exist_ok=True)
+
+    with open(source_file, "rb") as src, open(dest_file, "wb") as dst:
+        dst.write(src.read())
 
 
 def hex_to_rgb(hex_color):
@@ -170,18 +177,23 @@ def percentage_converter(pdf_path, dimensions, location):
 
 
 def merge_pdfs(
-    base_pdf_path,
     output_path,
     overlay_height,
+    is_final,
     start_loc=(0, 0),
     exclude_pages=None,
     overlay_pdf_path=temp_pdf,
+    base_pdf_path=temp_loop_pdf,
 ):
     # Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages.
     exclude_pages = exclude_pages or []
-    base_pdf_path = Path(base_pdf_path).resolve()
     overlay_pdf_path = Path(overlay_pdf_path).resolve()
     output_path = Path(output_path).resolve()
+
+    if not is_final:
+        output_path = temp_loop_pdf
+    else:
+        output_path = Path(output_path).resolve()
 
     try:
         base_pdf = PdfReader(base_pdf_path)
@@ -201,8 +213,8 @@ def merge_pdfs(
                 )
             writer.add_page(page)
 
-        with open(output_path, "wb") as f:
-            writer.write(f)
+        with open(output_path, "wb") as out:
+            writer.write(out)
     except FileNotFoundError:
         raise ValueError(f"PDF file not found: {base_pdf_path} or {overlay_pdf_path}")
     except Exception as e:
