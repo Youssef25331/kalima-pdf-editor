@@ -475,11 +475,14 @@ class MyGui:
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
         aspect_ratio = orig_width / orig_height
-        new_width = self.image_frame.winfo_width()
+        new_width = self.image_frame._current_width
         new_height = self.image_frame._current_height
+        side_panel = self.side_panel.winfo_width() - 40
 
         if new_width / new_height > aspect_ratio:
             new_width = int(new_height * aspect_ratio)
+
+        self.pdf_window.minsize(int(side_panel + new_height), 600)
 
         # Update the CTkImage size dynamically
         self.background_image.configure(size=(new_width, new_height))
