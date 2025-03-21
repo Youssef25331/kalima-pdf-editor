@@ -110,8 +110,15 @@ def create_text_pdf(
             0, 0, 9999, 9999, style="F"
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
 
-    pdf.set_font(font_family, size=font_size)
-    pdf.multi_cell(dimensions[0], dimensions[1], txt=text, align="C", border=0)
+    pdf.set_font(font_family, size=int(math.floor(font_size)))
+    pdf.cell(
+        dimensions[0],
+        dimensions[1],
+        txt=text,
+        align="C",
+        ln=0,
+        border=0,
+    )
     pdf.output(output_path)
 
 
@@ -159,7 +166,7 @@ def convert_pdf_page(pdf_path, page_number, output):
 
 
 # Percentage In the case the values where being sent by the GUI
-def percentage_converter(pdf_path, dimensions, location):
+def percentage_converter(pdf_path, dimensions, location, font_percetage=None):
     pdf = PdfReader(pdf_path)
 
     converted_dimensions = (
@@ -172,6 +179,11 @@ def percentage_converter(pdf_path, dimensions, location):
         math.floor(pdf.pages[0].mediabox[2] * location[0]),
         math.floor(pdf.pages[0].mediabox[3] * location[1]),
     )
+    if font_percetage:
+        converted_font_size = pdf.pages[0].mediabox[3] * font_percetage
+        print([converted_dimensions, converted_location, converted_font_size])
+        return [converted_dimensions, converted_location, converted_font_size]
+
     print([converted_dimensions, converted_location])
     return [converted_dimensions, converted_location]
 

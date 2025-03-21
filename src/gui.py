@@ -141,7 +141,7 @@ class MyGui:
 
         self.image_frame = ct.CTkFrame(self.pdf_window)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-        self.background_panel = ct.CTkLabel(self.image_frame)
+        self.background_panel = ct.CTkLabel(self.image_frame,text="")
 
         # Bind the resize event to the image frame (not the whole window)
         self.image_frame.bind("<Configure>", self.resize_image)
@@ -260,6 +260,7 @@ class MyGui:
                     self.pdf,
                     (item["width_percent"], item["height_percent"]),
                     (item["relative_x"], item["relative_y"]),
+                    item["relative_font_size"],
                 )
                 if "image" in item:
                     pdf_editor.resize_and_save_image(
@@ -276,7 +277,7 @@ class MyGui:
                         bg_color=item["bg_color"],
                         text_color=item["text_color"],
                         font_family=item["font_family"],
-                        font_size=item["font_size"],
+                        font_size=item_translations[2],
                     )
                 pdf_editor.merge_pdfs(
                     save_path,
@@ -349,6 +350,7 @@ class MyGui:
             "panel": drag_panel,
             "font_family": "Arial",
             "font_size": 12,
+            "relative_font_size": 12,
             "x": 0,
             "y": 0,
             "is_resizing": False,
@@ -375,10 +377,10 @@ class MyGui:
 
     # A function to calculate all the required relative numbers for the conversion.
     def calulate_relative_dimensions(self, item):
-        image_width = item["panel"].winfo_width()
-        image_height = item["panel"].winfo_height()
-        image_position_x = item["panel"].winfo_x()
-        image_position_y = item["panel"].winfo_y()
+        item_width = item["panel"].winfo_width()
+        item_height = item["panel"].winfo_height()
+        item_position_x = item["panel"].winfo_x()
+        item_position_y = item["panel"].winfo_y()
 
         scaling = (
             self.background_panel.winfo_height() / self.background_image.cget("size")[1]
@@ -387,17 +389,22 @@ class MyGui:
         self.rendered_background_width = self.background_image.cget("size")[0] * scaling
         self.rendered_pdf_height = self.background_image.cget("size")[1] * scaling
         item["relative_x"] = (
-            image_position_x
+            item_position_x
             - (
                 (self.background_panel.winfo_width() - self.rendered_background_width)
                 / 2
             )
         ) / self.rendered_background_width
 
-        item["relative_y"] = image_position_y / self.background_panel.winfo_height()
+        item["relative_y"] = item_position_y / self.background_panel.winfo_height()
 
-        item["width_percent"] = image_width / self.rendered_background_width
-        item["height_percent"] = image_height / self.rendered_pdf_height
+        item["width_percent"] = item_width / self.rendered_background_width
+        item["height_percent"] = item_height / self.rendered_pdf_height
+        if "text" in item:
+            dpi = self.pdf_window.winfo_fpixels("1i")
+            font_height_px = item["font_size"] * (dpi / 72)
+            font_percentage = font_height_px / self.rendered_pdf_height
+            item["relative_font_size"] = font_percentage
 
     def start_action(self, event, item):
         self.current_item = item["index"]
