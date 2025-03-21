@@ -108,6 +108,8 @@ class MyGui:
 
         # Bind the resize event to the image frame (not the whole window)
         self.image_frame.bind("<Configure>", self.resize_image)
+        self.resize_id = None
+        self.pdf_window.bind("<Configure>", self.debouce_update)
 
         # Actions after initalization
 
@@ -185,7 +187,7 @@ class MyGui:
         if self.current_item >= 0:
             item = self.editing_items[self.current_item]
             item["panel"].destroy()
-            item = {"index": item["index"], "deleted": True}
+            self.editing_items[self.current_item] = {"index": item["index"], "deleted": True}
         self.current_item = -1
         self.update_side_panel()
 
@@ -526,6 +528,19 @@ class MyGui:
 
         # Optional: Force update the label to reflect the new image size
         self.background_panel.configure(image=self.background_image)
+
+    def debouce_update(self, event):
+        if self.resize_id is not None:
+            self.pdf_window.after_cancel(self.resize_id)
+        self.resize_id = self.pdf_window.after(400, self.update_all_items)
+
+    def update_all_items(self):
+        if len(self.editing_items):
+            for item in self.editing_items:
+                if "deleted" not in item:
+                    print(item)
+                    self.calulate_relative_dimensions(item)
+                    print(item)
 
 
 root = ct.CTk()
