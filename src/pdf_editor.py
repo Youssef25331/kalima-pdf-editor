@@ -19,6 +19,7 @@ temp_dir = setup_temp_dir()
 temp_pdf = temp_dir / "Temp.pdf"
 temp_loop_pdf = temp_dir / "Loop.pdf"
 temp_background = temp_dir / "Temp.png"
+temp_text = temp_dir / "Temp_Text.png"
 
 
 def setup_loop_file(source_file, dest_file=temp_loop_pdf):
@@ -49,6 +50,7 @@ def load_project_fonts():
         font_name = font["name"].getDebugName(4)
         fonts.append((font_name, font_path, font_path))
     return fonts
+
 
 def resize_and_save_image(
     input_path, opacity, width, height=None, bg_color=None, output_path=temp_pdf
@@ -86,6 +88,7 @@ def resize_and_save_image(
 def create_text_pdf(
     text,
     dimensions,
+    opacity,
     text_color="000000",
     bg_color=None,
     font_family="helvetica",
@@ -126,6 +129,19 @@ def create_text_pdf(
         border=0,
     )
     pdf.output(output_path)
+    if opacity != 1:
+        convert_pdf_page(temp_pdf, 1, temp_text)
+        img = Image.open(temp_text).convert("RGBA")
+        img = img.resize(
+            (dimensions[0], dimensions[1]), Image.Resampling.LANCZOS
+        )  # Better quality resizing
+        bg_rgb = hex_to_rgb(bg_color)
+        background = Image.new(
+            "RGBA", (dimensions[0], dimensions[1]), bg_rgb + (255,)
+        )  # Add alpha channel
+        background.paste(img, (0, 0), mask=img)
+        background.putalpha(int(255 * opacity))
+        background.save(output_path, "PDF")
 
 
 # def get_num_of_lines_in_multicell(pdf, message):
@@ -144,8 +160,9 @@ def create_text_pdf(
 #     print(n)
 #     return n
 
-
 # converts a page to a PNG to be loaded in GUI
+
+
 def convert_pdf_page(pdf_path, page_number, output):
     try:
         # Convert specific page to image
@@ -159,8 +176,6 @@ def convert_pdf_page(pdf_path, page_number, output):
 
         if images:
             images[0].save(output, "PNG")
-            print(f"Successfully converted page {page_number} to temp_pdf.png")
-
             return PdfReader(pdf_path).get_num_pages()
         else:
             print("Conversion failed: No image generated")

@@ -157,8 +157,9 @@ class MyGui:
             item = self.editing_items[self.current_item]
             self.bg_color_button.configure(fg_color=item["bg_color"])
             self.bg_color_button.pack(pady=10)
+            self.opacity_slider.pack(pady=10)
+            self.opacity_slider.set(item["opacity"])
             if "text" in item:
-                self.opacity_slider.pack_forget()
                 self.font_menu.pack(pady=10)
                 self.font_slider.set(item["font_size"])
                 self.font_slider.pack(pady=10)
@@ -171,8 +172,6 @@ class MyGui:
                 self.text_color_button.pack_forget()
                 self.text_entry.pack_forget()
                 self.text_submit.pack_forget()
-                self.opacity_slider.pack(pady=10)
-                self.opacity_slider.set(item["opacity"])
         else:
             self.opacity_slider.pack_forget()
             self.font_slider.pack_forget()
@@ -287,13 +286,12 @@ class MyGui:
             if item["index"] == len(self.editing_items) - 1:
                 is_final = True
             if "deleted" not in item:
-                item_translations = pdf_editor.percentage_converter(
-                    self.pdf,
-                    (item["width_percent"], item["height_percent"]),
-                    (item["relative_x"], item["relative_y"]),
-                    item["relative_font_size"],
-                )
                 if "image" in item:
+                    item_translations = pdf_editor.percentage_converter(
+                        self.pdf,
+                        (item["width_percent"], item["height_percent"]),
+                        (item["relative_x"], item["relative_y"]),
+                    )
                     pdf_editor.resize_and_save_image(
                         item["image_location"],
                         item["opacity"],
@@ -302,9 +300,16 @@ class MyGui:
                         item["panel"]._fg_color,
                     )
                 else:
+                    item_translations = pdf_editor.percentage_converter(
+                        self.pdf,
+                        (item["width_percent"], item["height_percent"]),
+                        (item["relative_x"], item["relative_y"]),
+                        item["relative_font_size"],
+                    )
                     pdf_editor.create_text_pdf(
                         item["text"],
                         (item_translations[0][0], item_translations[0][1]),
+                        item["opacity"],
                         bg_color=item["bg_color"],
                         text_color=item["text_color"],
                         font_family=item["font_family"],
