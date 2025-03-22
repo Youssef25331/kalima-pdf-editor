@@ -438,9 +438,9 @@ class MyGui:
 
         item["width_percent"] = item_width / self.rendered_background_width
         item["height_percent"] = item_height / self.rendered_pdf_height
+        print([item["relative_font_size"]])
         if "text" in item:
-            dpi = self.pdf_window.winfo_fpixels("1i")
-            font_height_px = item["font_size"] * (dpi / 72)
+            font_height_px = item["font_size"]
             font_percentage = font_height_px / self.rendered_pdf_height
             item["relative_font_size"] = font_percentage
 
