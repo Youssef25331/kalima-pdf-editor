@@ -53,18 +53,18 @@ class MyGui:
 
         # setup page movment
         self.current_page_number = 1
-        self.button1 = ct.CTkButton(
+        self.right_page_button = ct.CTkButton(
             self.side_panel, text="Page Right", command=lambda: self.page_move(True)
         )
-        self.button2 = ct.CTkButton(
+        self.left_page_button = ct.CTkButton(
             self.side_panel, text="Page Left", command=lambda: self.page_move(False)
         )
-        self.button1.pack(pady=10, padx=10)
-        self.button2.pack(pady=10, padx=10)
+        self.right_page_button.pack(pady=10, padx=10)
+        self.left_page_button.pack(pady=10, padx=10)
 
         self.image_button = ct.CTkButton(
             master=self.side_panel,
-            text="Click TO add Image",
+            text="Add Image",
             height=40,
             command=self.add_image,
         )
@@ -72,7 +72,7 @@ class MyGui:
 
         self.text_button = ct.CTkButton(
             master=self.side_panel,
-            text="Click TO add Text",
+            text="Add Text",
             height=40,
             command=self.add_text,
         )
@@ -438,7 +438,6 @@ class MyGui:
 
         item["width_percent"] = item_width / self.rendered_background_width
         item["height_percent"] = item_height / self.rendered_pdf_height
-        print([item["relative_font_size"]])
         if "text" in item:
             font_height_px = item["font_size"]
             font_percentage = font_height_px / self.rendered_pdf_height
