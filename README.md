@@ -15,10 +15,13 @@ To run this project, ensure you have the following dependencies installed:
 - `fpdf` - For creating PDFs
 - `PIL` (Pillow) - For image processing
 - `customtkinter` - For the graphical user interface
+- `CTkColorPicker` - For a custom color picker
+- `arabic_reshaper` and `bidi` For Arabic suppport
+- `fontTools` For fonts import.
 
 Install these packages using `pip`. For example:
 ```bash
-pip install pypdf pdf2image fpdf Pillow customtkinter CTkColorPicker
+pip install pypdf pdf2image fpdf Pillow customtkinter CTkColorPicker python-bidi arabic-reshaper fonttools
 ```
 ### External Dependency
 - **Poppler**: Required for PDF-to-image conversion  
@@ -29,5 +32,6 @@ pip install pypdf pdf2image fpdf Pillow customtkinter CTkColorPicker
 1. Launch the app with `python GUI.py`.
 2. Choose a PDF file to edit.
 3. Make the desired changed from the sidebar.
-4. Click convert and an `output.pdf` will appear in the project directory.
+4. Click convert and and select location. 
+5. Ouput will appear in the selected locatoin.
 
