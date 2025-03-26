@@ -112,7 +112,7 @@ class MyGui:
                 self.global_font_style,
             ),
             text_color=self.text_color,
-            width=100,
+            width=110,
         )
         self.setup_text_buttons()
         self.setup_images_buttons()
@@ -279,7 +279,7 @@ class MyGui:
                 self.global_font_style,
             ),
             text_color=self.text_color,
-            width=100,
+            width=110,
         )
         self.font_menu = ct.CTkOptionMenu(
             master=self.top_frame,
@@ -319,7 +319,7 @@ class MyGui:
                 self.global_font_style,
             ),
             text_color=self.text_color,
-            width=100,
+            width=110,
         )
 
         self.text_color_button = ct.CTkButton(
@@ -330,6 +330,7 @@ class MyGui:
                 self.global_font_size,
                 self.global_font_style,
             ),
+            text_color=self.text_color,
             hover_color=self.main_hover,
             command=self.text_color_picker,
             width=100,
