@@ -217,6 +217,7 @@ def merge_pdfs(
     exclude_pages=None,
     overlay_pdf_path=temp_pdf,
     base_pdf_path=temp_loop_pdf,
+    invert=False,
 ):
     # Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages.
     exclude_pages = exclude_pages or []
@@ -234,16 +235,28 @@ def merge_pdfs(
         writer = PdfWriter()
 
         for page_num, page in enumerate(base_pdf.pages, start=1):
-            if page_num not in exclude_pages:
-                page.merge_translated_page(
-                    overlay_pdf.pages[0],
-                    start_loc[0],
-                    page.mediabox[3]
-                    - overlay_height
-                    - start_loc[
-                        1
-                    ],  # Removes the overlay and the Y start locatin to be inserted in the correct spot since the Y starts from the bottom.
-                )
+            if invert:
+                if page_num in exclude_pages:
+                    page.merge_translated_page(
+                        overlay_pdf.pages[0],
+                        start_loc[0],
+                        page.mediabox[3]
+                        - overlay_height
+                        - start_loc[
+                            1
+                        ],  # Removes the overlay and the Y start locatin to be inserted in the correct spot since the Y starts from the bottom.
+                    )
+            else:
+                if page_num not in exclude_pages:
+                    page.merge_translated_page(
+                        overlay_pdf.pages[0],
+                        start_loc[0],
+                        page.mediabox[3]
+                        - overlay_height
+                        - start_loc[
+                            1
+                        ],  # Removes the overlay and the Y start locatin to be inserted in the correct spot since the Y starts from the bottom.
+                    )
             writer.add_page(page)
 
         with open(output_path, "wb") as out:
