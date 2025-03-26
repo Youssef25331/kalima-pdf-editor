@@ -34,10 +34,12 @@ class MyGui:
         self.pdf = ct.filedialog.askopenfilename(
             initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
         )
-        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
         if self.pdf:
             self.root.destroy()  # Close the original window
             self.open_pdf_window()
+        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        # self.root.destroy()
+        # self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -111,9 +113,24 @@ class MyGui:
                 self.global_font_size,
                 self.global_font_style,
             ),
+            text="Opacity: ",
             text_color=self.text_color,
             width=110,
         )
+        self.opacity_entry = ct.CTkEntry(
+            self.top_frame,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            text_color=self.text_color,
+            placeholder_text="",
+            width=30,
+            border_width=0,
+            fg_color=self.second_dark,
+        )
+        self.opacity_entry.bind("<Return>", self.set_opacity)
         self.setup_text_buttons()
         self.setup_images_buttons()
 
@@ -162,14 +179,21 @@ class MyGui:
             self.bottom_frame,
             placeholder_text="Exclude pages eg:10,14,30....",
             fg_color=self.second_dark_hover,
+            border_width=1,
             width=170,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            text_color=self.text_color,
         )
         self.exclusion_entry.bind("<Return>", self.set_exclusion)
         self.exclusion_invert = ct.CTkCheckBox(
             self.bottom_frame,
-            border_width=2,
             border_color="#565b5e",
             fg_color=self.main,
+            border_width=1,
             checkmark_color=self.text_color,
             text="",
             width=0,
@@ -177,6 +201,13 @@ class MyGui:
         )
         self.page_entry = ct.CTkEntry(
             self.bottom_frame,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            text_color=self.text_color,
+            border_width=1,
             placeholder_text="",
             width=28,
             fg_color=self.second_dark_hover,
@@ -186,11 +217,16 @@ class MyGui:
         self.left_page_button = ct.CTkButton(
             self.bottom_frame,
             text="",
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            text_color=self.text_color,
             image=self.left_arrow,
             height=30,
             command=lambda: self.page_move(False),
             width=90,
-            text_color=self.text_color,
             fg_color=self.main,
             hover_color=self.main_hover,
         )
@@ -227,10 +263,10 @@ class MyGui:
 
         # Grid layout.
         self.text_button.grid(
-            row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=10
+            row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=16
         )
         self.image_button.grid(
-            row=0, column=2, columnspan=2, sticky="ew", padx=5, pady=10
+            row=0, column=2, columnspan=2, sticky="ew", padx=5, pady=16
         )
         self.exclusion_entry.grid(
             row=0, column=0, padx=5, pady=5, columnspan=3, sticky="w"
@@ -271,6 +307,20 @@ class MyGui:
             command=self.background_opacity_picker,
             width=100,
         )
+        self.background_opacity_entry = ct.CTkEntry(
+            self.top_frame,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            border_width=0,
+            fg_color=self.second_dark,
+            text_color=self.text_color,
+            placeholder_text="",
+            width=30,
+        )
+        self.background_opacity_entry.bind("<Return>", self.set_background_opacity)
         self.background_opacity_label = ct.CTkLabel(
             master=self.top_frame,
             font=(
@@ -297,7 +347,7 @@ class MyGui:
             dropdown_fg_color=self.second_dark,
             dropdown_text_color=self.text_color,
             dropdown_hover_color=self.second_dark_hover,
-            width=215,
+            width=210,
             height=36,
             text_color=self.text_color,
         )
@@ -340,7 +390,7 @@ class MyGui:
         self.text_entry = ct.CTkEntry(
             master=self.top_frame,
             placeholder_text="Input text",
-            width=215,
+            width=210,
             height=36,
             fg_color=self.second_dark_hover,
         )
@@ -367,14 +417,36 @@ class MyGui:
                     columnspan=2,
                     pady=10,
                 )
-                self.opacity_label.grid(row=2, column=0, columnspan=2, padx=5)
-                self.opacity_label.configure(text="Opacity: " + str(item["opacity"]))
+                self.opacity_label.grid(
+                    row=2,
+                    column=0,
+                    columnspan=2,
+                )
+                self.opacity_label.configure(text="Opacity: ")
+
                 self.background_opacity_label.grid(
-                    row=2, column=2, columnspan=2, pady=0
+                    row=2,
+                    column=2,
+                    columnspan=2,
                 )
-                self.background_opacity_label.configure(
-                    text="BG Opacity: " + str(item["opacity"])
+                self.opacity_label.grid(
+                    row=2,
+                    column=0,
+                    columnspan=2,
                 )
+                self.opacity_entry.grid(
+                    row=2, column=1, columnspan=2, padx=78, sticky="w"
+                )
+                self.opacity_entry.delete(0)
+                self.opacity_entry.insert(0, str(item["opacity"]))
+                self.opacity_entry.lift()
+                self.background_opacity_entry.grid(
+                    row=2, column=2, columnspan=2, sticky="e"
+                )
+                self.background_opacity_entry.lift()
+                self.background_opacity_label.configure(text="BG Opacity:   ")
+                self.background_opacity_entry.delete(0)
+                self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
                 self.opacity_slider.configure(width=100)
                 self.opacity_slider.grid(row=3, column=0, columnspan=2, pady=0)
                 self.background_opacity_slider.grid(
@@ -401,10 +473,14 @@ class MyGui:
                 self.text_entry.grid(row=7, padx=5, pady=15, column=0, columnspan=4)
                 self.font_menu.grid(row=8, column=0, padx=5, pady=0, columnspan=4)
             else:
+                self.opacity_entry.grid(
+                    row=2, column=2, columnspan=2, sticky="w", padx=24
+                )
                 self.bg_color_button.configure(width=215, height=36)
                 self.bg_color_button.grid(
                     row=1, column=0, columnspan=4, pady=10, padx=5
                 )
+                self.background_opacity_entry.grid_forget()
                 self.background_opacity_slider.grid_forget()
                 self.opacity_label.grid(row=2, column=1, columnspan=2)
                 self.opacity_slider.configure(width=215)
@@ -422,6 +498,11 @@ class MyGui:
                 self.text_entry.grid_forget()
                 self.text_submit.grid_forget()
         else:
+            self.opacity_label.grid_forget()
+            self.font_size_label.grid_forget()
+            self.opacity_entry.grid_forget()
+            self.background_opacity_entry.grid_forget()
+            self.background_opacity_label.grid_forget()
             self.background_opacity_slider.grid_forget()
             self.opacity_slider.grid_forget()
             self.font_menu.grid_forget()
@@ -492,14 +573,20 @@ class MyGui:
     def opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["opacity"] = round(value, 1)
-        self.opacity_label.configure(text="Opacity: " + str(item["opacity"]))
+        self.opacity_entry.delete(0)
+        self.opacity_entry.insert(0, str(item["opacity"]))
+
+    def set_opacity(self, event):
+        return
 
     def background_opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["bg_opacity"] = round(value, 1)
-        self.background_opacity_label.configure(
-            text="BG Opacity: " + str(item["bg_opacity"])
-        )
+        self.background_opacity_entry.delete(0)
+        self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
+
+    def set_background_opacity(self, event):
+        return
 
     def font_family_picker(self, font):
         item = self.editing_items[self.current_item]
@@ -608,7 +695,11 @@ class MyGui:
             size=size,
         )
         drag_panel = ct.CTkLabel(
-            self.background_panel, image=overlay_image, text="", fg_color="#FFFFFF"
+            self.background_panel,
+            image=overlay_image,
+            text="",
+            fg_color="#FFFFFF",
+            anchor="center",
         )
         drag_panel.place(x=0, y=0)
         item = {
@@ -629,7 +720,6 @@ class MyGui:
             "bg_color": "#FFFFFF",
             "opacity": 1,
         }
-        print(item["index"])
 
         drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))
         drag_panel.bind("<B1-Motion>", lambda event: self.do_action(event, item))
@@ -649,10 +739,10 @@ class MyGui:
             fg_color="#000000",
             width=120,
             height=120,
-            anchor="center",
             font=("Arial", 12),
+            anchor="center",
         )
-        drag_panel.place(anchor="center")
+        drag_panel.place(x=0, y=0)
         item = {
             "index": len(self.editing_items),
             "type": "text",
@@ -724,6 +814,8 @@ class MyGui:
         width = item["panel"].winfo_width()
         height = item["panel"].winfo_height()
         border = 10  # How many pixels near an edge to consider resizing.
+        item["start_x"] = event.x - (width / 2)
+        item["start_y"] = event.y - (height / 2)
 
         # Determine if click is near an edge based on mouse relative position.
         if x >= width - border and y >= height - border:
@@ -773,16 +865,16 @@ class MyGui:
     def do_drag(self, event, item):
         image_position_x = item["panel"].winfo_x()
         image_position_y = item["panel"].winfo_y()
+        drag_width = item["panel"].winfo_width()
+        drag_height = item["panel"].winfo_height()
 
         # Calculate the new position
-        new_x = image_position_x + event.x
-        new_y = image_position_y + event.y
+        new_x = image_position_x + (event.x - item["start_x"])
+        new_y = image_position_y + (event.y - item["start_y"])
 
         # Optional: Constrain within image_frame bounds
         frame_width = self.image_frame.winfo_width()
         frame_height = self.image_frame.winfo_height()
-        drag_width = item["panel"].winfo_width()
-        drag_height = item["panel"].winfo_height()
 
         # Bind withing image_frame
         new_x = max(drag_width / 2, min(new_x, frame_width - drag_width / 2))
