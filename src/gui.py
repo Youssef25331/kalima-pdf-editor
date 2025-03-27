@@ -66,6 +66,7 @@ class MyGui:
         self.global_font_style = "bold"
 
         self.pdf_window.configure(fg_color=self.dark)
+
         # The side panel with differnt tools
         self.side_panel = ct.CTkFrame(self.pdf_window, corner_radius=0, width=200)
         self.side_panel.pack(side="left", fill="both", padx=0, pady=0)
@@ -392,6 +393,12 @@ class MyGui:
             placeholder_text="Input text",
             width=210,
             height=36,
+            text_color=self.text_color,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
             fg_color=self.second_dark_hover,
         )
         self.text_entry.bind("<Return>", self.set_text)
@@ -497,7 +504,6 @@ class MyGui:
                 self.font_menu.grid_forget()
                 self.text_color_button.grid_forget()
                 self.text_entry.grid_forget()
-                self.text_submit.grid_forget()
         else:
             self.opacity_label.grid_forget()
             self.font_size_label.grid_forget()
@@ -510,7 +516,6 @@ class MyGui:
             self.font_size_slider.grid_forget()
             self.text_color_button.grid_forget()
             self.text_entry.grid_forget()
-            self.text_submit.grid_forget()
             self.bg_color_button.grid_forget()
 
     def delete_item(self, event):
@@ -730,6 +735,8 @@ class MyGui:
             "image_location": loaded_logo,
             "image": overlay_image,
             "panel": drag_panel,
+            "window_width": self.image_frame.winfo_width(),
+            "window_height": self.image_frame.winfo_height(),
             "x": 0,
             "y": 0,
             "is_resizing": False,
@@ -749,7 +756,7 @@ class MyGui:
         drag_panel.bind(
             "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
         )
-        self.calulate_relative_dimensions(item)
+        self.calculate_relative_dimensions(item)
         self.editing_items.append(item)
         self.current_item = item["index"]
         self.update_side_panel()
@@ -776,6 +783,8 @@ class MyGui:
             "relative_font_size": 12,
             "x": 0,
             "y": 0,
+            "window_width": self.image_frame.winfo_width(),
+            "window_height": self.image_frame.winfo_height(),
             "is_resizing": False,
             "resize_edge": None,
             "start_x": 0,
@@ -794,14 +803,14 @@ class MyGui:
         drag_panel.bind(
             "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
         )
-        self.calulate_relative_dimensions(item)
+        self.calculate_relative_dimensions(item)
 
         self.editing_items.append(item)
         self.current_item = item["index"]
         self.update_side_panel()
 
     # A function to calculate all the required relative numbers for the conversion.
-    def calulate_relative_dimensions(self, item):
+    def calculate_relative_dimensions(self, item):
         item_width = item["panel"].winfo_width()
         item_height = item["panel"].winfo_height()
         item_position_x = item["panel"].winfo_x()
@@ -811,19 +820,17 @@ class MyGui:
             self.background_panel.winfo_height() / self.background_image.cget("size")[1]
         )
 
-        self.rendered_background_width = self.background_image.cget("size")[0] * scaling
+        self.rendered_pdf_width = self.background_image.cget("size")[0] * scaling
         self.rendered_pdf_height = self.background_image.cget("size")[1] * scaling
+
         item["relative_x"] = (
             item_position_x
-            - (
-                (self.background_panel.winfo_width() - self.rendered_background_width)
-                / 2
-            )
-        ) / self.rendered_background_width
+            - ((self.background_panel.winfo_width() - self.rendered_pdf_width) / 2)
+        ) / self.rendered_pdf_width
 
         item["relative_y"] = item_position_y / self.background_panel.winfo_height()
 
-        item["width_percent"] = item_width / self.rendered_background_width
+        item["width_percent"] = item_width / self.rendered_pdf_width
         item["height_percent"] = item_height / self.rendered_pdf_height
         if "text" in item:
             font_height_px = item["font_size"]
@@ -889,8 +896,11 @@ class MyGui:
                 x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
             )
 
+        item["x"] = item["panel"].winfo_x()
+        item["y"] = item["panel"].winfo_y()
+
     def stop_action(self, event, item):
-        self.calulate_relative_dimensions(item)
+        self.calculate_relative_dimensions(item)
         self.image_frame.configure(cursor="")
 
     def do_drag(self, event, item):
@@ -913,6 +923,8 @@ class MyGui:
 
         # Move the draggable image
         item["panel"].place(x=new_x, y=new_y, anchor="center")
+        item["x"] = item["panel"].winfo_x()
+        item["y"] = item["panel"].winfo_y()
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
@@ -929,7 +941,7 @@ class MyGui:
         # Update the CTkImage size dynamically
         self.background_image.configure(size=(new_width, new_height))
 
-        # Optional: Force update the label to reflect the new image size
+        # Force update the label to reflect the new image size
         self.background_panel.configure(image=self.background_image)
 
     def debouce_update(self, event):
@@ -941,7 +953,14 @@ class MyGui:
         if len(self.editing_items):
             for item in self.editing_items:
                 if "deleted" not in item:
-                    self.calulate_relative_dimensions(item)
+                    self.reposition_item(item)
+                    self.calculate_relative_dimensions(item)
+
+    def reposition_item(self, item):
+        offset = self.image_frame.winfo_width() - item["window_width"]
+        if offset > 100 or offset < -100:
+            item["panel"].place(x=self.image_frame.winfo_width() / 2)
+            item["window_width"] = self.image_frame.winfo_width()
 
 
 root = ct.CTk()
