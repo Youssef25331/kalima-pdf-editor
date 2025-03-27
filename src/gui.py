@@ -396,10 +396,6 @@ class MyGui:
         )
         self.text_entry.bind("<Return>", self.set_text)
 
-        self.text_submit = ct.CTkButton(
-            master=self.top_frame, text="Submit", command=self.set_text
-        )
-
     def update_side_panel(self):
         if self.current_item != -1:
             item = self.editing_items[self.current_item]
@@ -559,7 +555,7 @@ class MyGui:
             ct.FontManager.load_font(str(font[2]))
         return active_fonts
 
-    def set_text(self,event):
+    def set_text(self, event):
         input_text = self.text_entry.get()
         item = self.editing_items[self.current_item]
         if "text" in item:
@@ -843,6 +839,8 @@ class MyGui:
         border = 10  # How many pixels near an edge to consider resizing.
         item["start_x"] = event.x - (width / 2)
         item["start_y"] = event.y - (height / 2)
+        item["x"] = item["panel"].winfo_x()
+        item["y"] = item["panel"].winfo_y()
 
         # Determine if click is near an edge based on mouse relative position.
         if x >= width - border and y >= height - border:
@@ -882,8 +880,14 @@ class MyGui:
             self.image_frame.configure(cursor="sizing")
         if "image" in item:
             item["image"].configure(size=(new_width, new_height))
+            item["panel"].place(
+                x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
+            )
         else:
             item["panel"].configure(width=new_width, height=new_height)
+            item["panel"].place(
+                x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
+            )
 
     def stop_action(self, event, item):
         self.calulate_relative_dimensions(item)
