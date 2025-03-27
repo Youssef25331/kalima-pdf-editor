@@ -394,6 +394,7 @@ class MyGui:
             height=36,
             fg_color=self.second_dark_hover,
         )
+        self.text_entry.bind("<Return>", self.set_text)
 
         self.text_submit = ct.CTkButton(
             master=self.top_frame, text="Submit", command=self.set_text
@@ -437,7 +438,7 @@ class MyGui:
                 self.opacity_entry.grid(
                     row=2, column=1, columnspan=2, padx=78, sticky="w"
                 )
-                self.opacity_entry.delete(0)
+                self.opacity_entry.delete(0, "end")
                 self.opacity_entry.insert(0, str(item["opacity"]))
                 self.opacity_entry.lift()
                 self.background_opacity_entry.grid(
@@ -445,7 +446,7 @@ class MyGui:
                 )
                 self.background_opacity_entry.lift()
                 self.background_opacity_label.configure(text="BG Opacity:   ")
-                self.background_opacity_entry.delete(0)
+                self.background_opacity_entry.delete(0, "end")
                 self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
                 self.opacity_slider.configure(width=100)
                 self.opacity_slider.grid(row=3, column=0, columnspan=2, pady=0)
@@ -473,9 +474,13 @@ class MyGui:
                 self.text_entry.grid(row=7, padx=5, pady=15, column=0, columnspan=4)
                 self.font_menu.grid(row=8, column=0, padx=5, pady=0, columnspan=4)
             else:
+                self.opacity_slider.grid_forget()
+                self.opacity_slider.grid_forget()
                 self.opacity_entry.grid(
                     row=2, column=2, columnspan=2, sticky="w", padx=24
                 )
+                self.opacity_entry.delete(0, "end")
+                self.opacity_entry.insert(0, str(item["opacity"]))
                 self.bg_color_button.configure(width=215, height=36)
                 self.bg_color_button.grid(
                     row=1, column=0, columnspan=4, pady=10, padx=5
@@ -554,7 +559,7 @@ class MyGui:
             ct.FontManager.load_font(str(font[2]))
         return active_fonts
 
-    def set_text(self):
+    def set_text(self,event):
         input_text = self.text_entry.get()
         item = self.editing_items[self.current_item]
         if "text" in item:
@@ -573,20 +578,42 @@ class MyGui:
     def opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["opacity"] = round(value, 1)
-        self.opacity_entry.delete(0)
+        self.opacity_entry.delete(0, "end")
         self.opacity_entry.insert(0, str(item["opacity"]))
 
     def set_opacity(self, event):
-        return
+        item = self.editing_items[self.current_item]
+        try:
+            value = float(self.opacity_entry.get())
+            if 0 <= value <= 1:
+                item["opacity"] = round(value, 1)
+                self.opacity_entry.delete(0, "end")
+                self.opacity_entry.insert(0, str(item["opacity"]))
+                self.opacity_slider.set(value)
+            else:
+                print("Invalid input - use decimals between 0 and 1")
+        except ValueError:
+            print("Invalid input - use decimals between 0 and 1")
 
     def background_opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["bg_opacity"] = round(value, 1)
-        self.background_opacity_entry.delete(0)
+        self.background_opacity_entry.delete(0, "end")
         self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
 
     def set_background_opacity(self, event):
-        return
+        item = self.editing_items[self.current_item]
+        try:
+            value = float(self.background_opacity_entry.get())
+            if 0 <= value <= 1:
+                item["bg_opacity"] = round(value, 1)
+                self.background_opacity_entry.delete(0, "end")
+                self.background_opacity_entry.insert(0, str(item["opacity"]))
+                self.background_opacity_slider.set(value)
+            else:
+                print("Invalid input - use decimals between 0 and 1")
+        except ValueError:
+            print("Invalid input - use decimals between 0 and 1")
 
     def font_family_picker(self, font):
         item = self.editing_items[self.current_item]
