@@ -48,6 +48,7 @@ class MyGui:
         self.pdf_window.title("PDF Editor")
         self.pdf_window.minsize(600, 200)
         self.exclusion_list = []
+        self.is_include = False
         self.editing_items = []
         self.current_item = -1
         self.pdf_window.bind("<Delete>", self.delete_item)
@@ -57,6 +58,8 @@ class MyGui:
         self.main_hover = "#213c4e"
         self.success = "#1b6f07"
         self.success_hover = "#2eb00e"
+        self.fail = "#B00B05"
+        self.fail_hover = "#D60D06"
         self.dark = "#0e0e0f"
         self.second_dark = "#121214"
         self.second_dark_hover = "#17171a"
@@ -66,7 +69,6 @@ class MyGui:
         self.global_font_style = "bold"
 
         self.pdf_window.configure(fg_color=self.dark)
-
         # The side panel with differnt tools
         self.side_panel = ct.CTkFrame(self.pdf_window, corner_radius=0, width=200)
         self.side_panel.pack(side="left", fill="both", padx=0, pady=0)
@@ -292,7 +294,6 @@ class MyGui:
         self.set_background()
 
         # Optional: Disable the main window while the new one is open
-        self.pdf_window.grab_set()
         self.pdf_window.mainloop()
 
     def setup_images_buttons(self):
@@ -393,12 +394,6 @@ class MyGui:
             placeholder_text="Input text",
             width=210,
             height=36,
-            text_color=self.text_color,
-            font=(
-                self.global_font_family,
-                self.global_font_size,
-                self.global_font_style,
-            ),
             fg_color=self.second_dark_hover,
         )
         self.text_entry.bind("<Return>", self.set_text)
@@ -533,12 +528,47 @@ class MyGui:
         input_text = self.exclusion_entry.get()
         try:
             values = [int(x.strip()) for x in input_text.split(",") if x.strip()]
-            if values:  # Ensure list isn’t empty
+            if values and not self.exclusion_invert.get():  # Ensure list isn’t empty
                 self.exclusion_list = values
+                self.is_include = False
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Success",
+                    "Success!",
+                    self.success,
+                    "Pages '" + input_text + "' Will not be edited.",
+                    self.text_color,
+                )
+            elif values and self.exclusion_invert.get():
+                self.exclusion_list = values
+                self.is_include = True
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Success",
+                    "Success!",
+                    self.success,
+                    "Only pages '" + input_text + "' Will be edited.",
+                    self.text_color,
+                )
+
             else:
-                print("No values entered!")
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Error",
+                    "Error!",
+                    self.fail,
+                    "No Values where entered.",
+                    self.text_color,
+                )
         except ValueError:
-            print("Invalid input - use numbers like '1, 2, 3, 4'!")
+            self.show_popup_window(
+                self.pdf_window,
+                "Error",
+                "Error!",
+                self.fail,
+                "Invalid input - use numbers like '1, 2, 3, 4'!",
+                self.text_color,
+            )
 
     def set_page(self, event):
         input_text = self.page_entry.get()
@@ -548,8 +578,24 @@ class MyGui:
                 self.current_page_number = value
                 self.set_background()
             else:
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Error",
+                    "Error!",
+                    self.fail,
+                    "No Values where entered.",
+                    self.text_color,
+                )
                 print("No values entered!")
         except ValueError:
+            self.show_popup_window(
+                self.pdf_window,
+                "Error",
+                "Error!",
+                self.fail,
+                "Invalid input - use numbers like '10'!",
+                self.text_color,
+            )
             print("Invalid input - use numbers like '10'!")
 
     def load_fonts(self):
@@ -592,8 +638,24 @@ class MyGui:
                 self.opacity_entry.insert(0, str(item["opacity"]))
                 self.opacity_slider.set(value)
             else:
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Error",
+                    "Error!",
+                    self.fail,
+                    "Invalid input - use decimals between 0 and 1",
+                    self.text_color,
+                )
                 print("Invalid input - use decimals between 0 and 1")
         except ValueError:
+            self.show_popup_window(
+                self.pdf_window,
+                "Error",
+                "Error!",
+                self.fail,
+                "Invalid input - use decimals between 0 and 1",
+                self.text_color,
+            )
             print("Invalid input - use decimals between 0 and 1")
 
     def background_opacity_picker(self, value):
@@ -612,8 +674,24 @@ class MyGui:
                 self.background_opacity_entry.insert(0, str(item["opacity"]))
                 self.background_opacity_slider.set(value)
             else:
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Error",
+                    "Error!",
+                    self.fail,
+                    "Invalid input - use decimals between 0 and 1",
+                    self.text_color,
+                )
                 print("Invalid input - use decimals between 0 and 1")
         except ValueError:
+            self.show_popup_window(
+                self.pdf_window,
+                "Error",
+                "Error!",
+                self.fail,
+                "Invalid input - use decimals between 0 and 1",
+                self.text_color,
+            )
             print("Invalid input - use decimals between 0 and 1")
 
     def font_family_picker(self, font):
@@ -667,49 +745,75 @@ class MyGui:
             filetypes=[("PDF Files", "*.pdf")],
             initialfile="output.pdf",
         )
+        if not save_path:
+            return
         pdf_editor.setup_loop_file(self.pdf)
+        deleted = 0
         for item in self.editing_items:
-            is_final = False
-            if item["index"] == len(self.editing_items) - 1:
-                is_final = True
-            if "deleted" not in item:
-                if "image" in item:
-                    item_translations = pdf_editor.percentage_converter(
-                        self.pdf,
-                        (item["width_percent"], item["height_percent"]),
-                        (item["relative_x"], item["relative_y"]),
-                    )
-                    pdf_editor.resize_and_save_image(
-                        item["image_location"],
-                        item["opacity"],
-                        item_translations[0][0],
-                        item_translations[0][1],
-                        item["panel"]._fg_color,
-                    )
+            try:
+                is_final = False
+                if item["index"] == len(self.editing_items) - 1:
+                    is_final = True
+                if "deleted" not in item:
+                    if "image" in item:
+                        item_translations = pdf_editor.percentage_converter(
+                            self.pdf,
+                            (item["width_percent"], item["height_percent"]),
+                            (item["relative_x"], item["relative_y"]),
+                        )
+                        pdf_editor.resize_and_save_image(
+                            item["image_location"],
+                            item["opacity"],
+                            item_translations[0][0],
+                            item_translations[0][1],
+                            item["panel"]._fg_color,
+                        )
+                    else:
+                        item_translations = pdf_editor.percentage_converter(
+                            self.pdf,
+                            (item["width_percent"], item["height_percent"]),
+                            (item["relative_x"], item["relative_y"]),
+                            item["relative_font_size"],
+                        )
+                        pdf_editor.create_text_pdf(
+                            item["text"],
+                            (item_translations[0][0], item_translations[0][1]),
+                            item["opacity"],
+                            bg_color=item["bg_color"],
+                            text_color=item["text_color"],
+                            font_family=item["font_family"],
+                            font_size=item_translations[2],
+                        )
+                        pdf_editor.merge_pdfs(
+                            save_path,
+                            item_translations[0][1],
+                            is_final,
+                            item_translations[1],
+                            self.exclusion_list,
+                            invert=self.is_include,
+                        )
                 else:
-                    item_translations = pdf_editor.percentage_converter(
-                        self.pdf,
-                        (item["width_percent"], item["height_percent"]),
-                        (item["relative_x"], item["relative_y"]),
-                        item["relative_font_size"],
-                    )
-                    pdf_editor.create_text_pdf(
-                        item["text"],
-                        (item_translations[0][0], item_translations[0][1]),
-                        item["opacity"],
-                        bg_color=item["bg_color"],
-                        text_color=item["text_color"],
-                        font_family=item["font_family"],
-                        font_size=item_translations[2],
-                    )
-                pdf_editor.merge_pdfs(
-                    save_path,
-                    item_translations[0][1],
-                    is_final,
-                    item_translations[1],
-                    self.exclusion_list,
-                    invert=bool(self.exclusion_invert.get()),
+                    deleted += 1
+            except ValueError as e:
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Error",
+                    "Uknown Error!",
+                    self.fail,
+                    str(e) + "\nMake sure not to open the file while editing.",
+                    self.text_color,
                 )
+                print("Unkown error!")
+        if deleted == len(self.editing_items):
+            self.show_popup_window(
+                self.pdf_window,
+                "Error",
+                "Error!",
+                self.fail,
+                "There are no active edits!",
+                self.text_color,
+                20,
+            )
 
     def add_image(self):
         loaded_logo = ct.filedialog.askopenfilename(
@@ -735,8 +839,6 @@ class MyGui:
             "image_location": loaded_logo,
             "image": overlay_image,
             "panel": drag_panel,
-            "window_width": self.image_frame.winfo_width(),
-            "window_height": self.image_frame.winfo_height(),
             "x": 0,
             "y": 0,
             "is_resizing": False,
@@ -756,7 +858,7 @@ class MyGui:
         drag_panel.bind(
             "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
         )
-        self.calculate_relative_dimensions(item)
+        self.calulate_relative_dimensions(item)
         self.editing_items.append(item)
         self.current_item = item["index"]
         self.update_side_panel()
@@ -783,8 +885,6 @@ class MyGui:
             "relative_font_size": 12,
             "x": 0,
             "y": 0,
-            "window_width": self.image_frame.winfo_width(),
-            "window_height": self.image_frame.winfo_height(),
             "is_resizing": False,
             "resize_edge": None,
             "start_x": 0,
@@ -803,14 +903,14 @@ class MyGui:
         drag_panel.bind(
             "<ButtonRelease-1>", lambda event: self.stop_action(event, item)
         )
-        self.calculate_relative_dimensions(item)
+        self.calulate_relative_dimensions(item)
 
         self.editing_items.append(item)
         self.current_item = item["index"]
         self.update_side_panel()
 
     # A function to calculate all the required relative numbers for the conversion.
-    def calculate_relative_dimensions(self, item):
+    def calulate_relative_dimensions(self, item):
         item_width = item["panel"].winfo_width()
         item_height = item["panel"].winfo_height()
         item_position_x = item["panel"].winfo_x()
@@ -820,17 +920,19 @@ class MyGui:
             self.background_panel.winfo_height() / self.background_image.cget("size")[1]
         )
 
-        self.rendered_pdf_width = self.background_image.cget("size")[0] * scaling
+        self.rendered_background_width = self.background_image.cget("size")[0] * scaling
         self.rendered_pdf_height = self.background_image.cget("size")[1] * scaling
-
         item["relative_x"] = (
             item_position_x
-            - ((self.background_panel.winfo_width() - self.rendered_pdf_width) / 2)
-        ) / self.rendered_pdf_width
+            - (
+                (self.background_panel.winfo_width() - self.rendered_background_width)
+                / 2
+            )
+        ) / self.rendered_background_width
 
         item["relative_y"] = item_position_y / self.background_panel.winfo_height()
 
-        item["width_percent"] = item_width / self.rendered_pdf_width
+        item["width_percent"] = item_width / self.rendered_background_width
         item["height_percent"] = item_height / self.rendered_pdf_height
         if "text" in item:
             font_height_px = item["font_size"]
@@ -899,11 +1001,8 @@ class MyGui:
             x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
         )
 
-        item["x"] = item["panel"].winfo_x()
-        item["y"] = item["panel"].winfo_y()
-
     def stop_action(self, event, item):
-        self.calculate_relative_dimensions(item)
+        self.calulate_relative_dimensions(item)
         self.image_frame.configure(cursor="")
 
     def do_drag(self, event, item):
@@ -926,8 +1025,6 @@ class MyGui:
 
         # Move the draggable image
         item["panel"].place(x=new_x, y=new_y, anchor="center")
-        item["x"] = item["panel"].winfo_x()
-        item["y"] = item["panel"].winfo_y()
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
@@ -944,7 +1041,7 @@ class MyGui:
         # Update the CTkImage size dynamically
         self.background_image.configure(size=(new_width, new_height))
 
-        # Force update the label to reflect the new image size
+        # Optional: Force update the label to reflect the new image size
         self.background_panel.configure(image=self.background_image)
 
     def debouce_update(self, event):
@@ -956,14 +1053,43 @@ class MyGui:
         if len(self.editing_items):
             for item in self.editing_items:
                 if "deleted" not in item:
-                    self.reposition_item(item)
-                    self.calculate_relative_dimensions(item)
+                    self.calulate_relative_dimensions(item)
 
-    def reposition_item(self, item):
-        offset = self.image_frame.winfo_width() - item["window_width"]
-        if offset > 100 or offset < -100:
-            item["panel"].place(x=self.image_frame.winfo_width() / 2)
-            item["window_width"] = self.image_frame.winfo_width()
+    def show_popup_window(
+        self,
+        parent,
+        title,
+        header_message,
+        header_color,
+        text_message,
+        text_color,
+        label_pading=20,
+        text_pading=0,
+    ):
+        popup = ct.CTkToplevel(parent, fg_color=self.dark)
+        popup.title(title)
+        popup.grab_set()
+        popup.configure()
+        popup.minsize(600, 250)
+        popup.maxsize(600, 250)
+
+        popup_label = ct.CTkLabel(
+            popup,
+            text=header_message,
+            wraplength=250,
+            text_color=header_color,
+            font=(self.global_font_family, 32, self.global_font_style),
+        )
+        popup_text = ct.CTkLabel(
+            popup,
+            text=text_message,
+            wraplength=300,
+            text_color=text_color,
+            font=(self.global_font_family, 18, self.global_font_style),
+        )
+
+        popup_label.pack(pady=label_pading)
+        popup_text.pack(pady=text_pading)
 
 
 root = ct.CTk()
