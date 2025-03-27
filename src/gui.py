@@ -882,19 +882,22 @@ class MyGui:
             self.image_frame.configure(cursor="sb_right_arrow")
         elif item["resize_edge"] == "bottom-right":
             dx = event.x - item["panel"].winfo_width()
+            ratio = item["panel"].winfo_width() / item["panel"].winfo_height()
             new_width = item["panel"].winfo_width() + dx
-            new_height = item["panel"].winfo_height() + dx
+            if "image" in item:
+                new_height = new_width / ratio
+            else:
+                new_height = item["panel"].winfo_height() + dx
             self.image_frame.configure(cursor="sizing")
+
         if "image" in item:
             item["image"].configure(size=(new_width, new_height))
-            item["panel"].place(
-                x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
-            )
         else:
             item["panel"].configure(width=new_width, height=new_height)
-            item["panel"].place(
-                x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
-            )
+
+        item["panel"].place(
+            x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
+        )
 
         item["x"] = item["panel"].winfo_x()
         item["y"] = item["panel"].winfo_y()
