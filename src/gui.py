@@ -750,60 +750,49 @@ class MyGui:
         pdf_editor.setup_loop_file(self.pdf)
         deleted = 0
         for item in self.editing_items:
-            try:
-                is_final = False
-                if item["index"] == len(self.editing_items) - 1:
-                    is_final = True
-                if "deleted" not in item:
-                    if "image" in item:
-                        item_translations = pdf_editor.percentage_converter(
-                            self.pdf,
-                            (item["width_percent"], item["height_percent"]),
-                            (item["relative_x"], item["relative_y"]),
-                        )
-                        pdf_editor.resize_and_save_image(
-                            item["image_location"],
-                            item["opacity"],
-                            item_translations[0][0],
-                            item_translations[0][1],
-                            item["panel"]._fg_color,
-                        )
-                    else:
-                        item_translations = pdf_editor.percentage_converter(
-                            self.pdf,
-                            (item["width_percent"], item["height_percent"]),
-                            (item["relative_x"], item["relative_y"]),
-                            item["relative_font_size"],
-                        )
-                        pdf_editor.create_text_pdf(
-                            item["text"],
-                            (item_translations[0][0], item_translations[0][1]),
-                            item["opacity"],
-                            bg_color=item["bg_color"],
-                            text_color=item["text_color"],
-                            font_family=item["font_family"],
-                            font_size=item_translations[2],
-                        )
-                        pdf_editor.merge_pdfs(
-                            save_path,
-                            item_translations[0][1],
-                            is_final,
-                            item_translations[1],
-                            self.exclusion_list,
-                            invert=self.is_include,
-                        )
+            is_final = False
+            if item["index"] == len(self.editing_items) - 1:
+                is_final = True
+            if "deleted" not in item:
+                if "image" in item:
+                    item_translations = pdf_editor.percentage_converter(
+                        self.pdf,
+                        (item["width_percent"], item["height_percent"]),
+                        (item["relative_x"], item["relative_y"]),
+                    )
+                    pdf_editor.resize_and_save_image(
+                        item["image_location"],
+                        item["opacity"],
+                        item_translations[0][0],
+                        item_translations[0][1],
+                        item["panel"]._fg_color,
+                    )
                 else:
-                    deleted += 1
-            except Exception as e:
-                self.show_popup_window(
-                    self.pdf_window,
-                    "Error",
-                    "Uknown Error!",
-                    self.fail,
-                    str(e) + "\nMake sure not to open the file while editing.",
-                    self.text_color,
-                )
-                print("Unkown error!")
+                    item_translations = pdf_editor.percentage_converter(
+                        self.pdf,
+                        (item["width_percent"], item["height_percent"]),
+                        (item["relative_x"], item["relative_y"]),
+                        item["relative_font_size"],
+                    )
+                    pdf_editor.create_text_pdf(
+                        item["text"],
+                        (item_translations[0][0], item_translations[0][1]),
+                        item["opacity"],
+                        bg_color=item["bg_color"],
+                        text_color=item["text_color"],
+                        font_family=item["font_family"],
+                        font_size=item_translations[2],
+                    )
+                    pdf_editor.merge_pdfs(
+                        save_path,
+                        item_translations[0][1],
+                        is_final,
+                        item_translations[1],
+                        self.exclusion_list,
+                        invert=self.is_include,
+                    )
+            else:
+                deleted += 1
         if deleted == len(self.editing_items):
             self.show_popup_window(
                 self.pdf_window,
