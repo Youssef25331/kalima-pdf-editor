@@ -794,7 +794,7 @@ class MyGui:
                         )
                 else:
                     deleted += 1
-            except ValueError as e:
+            except Exception as e:
                 self.show_popup_window(
                     self.pdf_window,
                     "Error",
