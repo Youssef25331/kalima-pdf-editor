@@ -1,4 +1,4 @@
-import math, os
+import math, os, sys
 from pypdf import PdfReader, PdfWriter
 from pdf2image import convert_from_path
 from PIL import Image
@@ -9,8 +9,22 @@ import arabic_reshaper
 from bidi.algorithm import get_display
 
 
+def get_base_path():
+    return (
+        Path(sys._MEIPASS) if getattr(sys, "frozen", False) else Path(__file__).parent
+    )
+
+
+def get_exe_dir():
+    return (
+        Path(sys.executable).parent
+        if getattr(sys, "frozen", False)
+        else Path(__file__).parent
+    )
+
+
 def setup_temp_dir():
-    temp_dir = Path(__file__).parent / "Temp"
+    temp_dir = get_exe_dir() / "Temp"
     temp_dir.mkdir(exist_ok=True)
     return temp_dir
 
@@ -20,6 +34,16 @@ temp_pdf = temp_dir / "Temp.pdf"
 temp_loop_pdf = temp_dir / "Loop.pdf"
 temp_background = temp_dir / "Temp.png"
 temp_text = temp_dir / "Temp_Text.png"
+
+
+if getattr(sys, "frozen", False):
+    font_dir = get_exe_dir() / "Fonts"
+else:
+    font_dir = Path(__file__).parent / "Fonts"
+
+
+# Construct the path to Poppler binaries
+poppler_path = os.path.join(get_base_path(), "poppler-24.08.0", "Library", "bin")
 
 
 def setup_loop_file(source_file, dest_file=temp_loop_pdf):
@@ -38,12 +62,13 @@ def hex_to_rgb(hex_color):
 # For importing fonts into FPDF
 def load_project_fonts():
     # Define the "fonts" folder relative to the project root
-    font_dir = Path(__file__).parent / "Fonts"  # Assumes script is in project root
     fonts = []
     if not font_dir.exists():
         font_dir.mkdir()
         print("Created 'Fonts' folder. Make sure to add fonts.")
-        return ["Ariel", "Helvatica"]
+        return [("Arial", None, None)]
+    elif not any(font_dir.iterdir()):  # Check if directory is empty
+        return [("Arial", None, None)]
     for font_path in font_dir.glob("*.ttf"):
         font_name = Path(font_path)
         font = TTFont(font_path)
@@ -107,7 +132,8 @@ def create_text_pdf(
     pdf.set_text_color(*text_rgb)
     fonts = load_project_fonts()
     for font_name, font_path, _ in fonts:
-        pdf.add_font(font_name, "", str(font_path), uni=True)
+        if font_path:
+            pdf.add_font(font_name, "", str(font_path), uni=True)
 
     if not font_size:
         font_size = int(dimensions[0] * 0.09)
@@ -171,10 +197,11 @@ def convert_pdf_page(pdf_path, page_number, output):
             first_page=page_number,  # Convert to 1-based
             last_page=page_number,  # Only convert one page
             dpi=200,
-            poppler_path=r"poppler-24.08.0\Library\bin",
+            poppler_path=poppler_path,
         )
 
         if images:
+            setup_temp_dir()
             images[0].save(output, "PNG")
             return PdfReader(pdf_path).get_num_pages()
         else:
@@ -187,23 +214,42 @@ def convert_pdf_page(pdf_path, page_number, output):
 
 
 # Percentage In the case the values where being sent by the GUI
-def percentage_converter(pdf_path, dimensions, location, font_percetage=None):
+def percentage_converter(
+    pdf_path, dimensions, location, font_percetage=None, edit_page=1
+):
+    edit_page -= 1
+    print(edit_page)
     pdf = PdfReader(pdf_path)
 
-    converted_dimensions = (
-        math.floor(pdf.pages[0].mediabox[2] * dimensions[0]),
-        math.floor(pdf.pages[0].mediabox[3] * dimensions[1]),
-    )
+    if pdf.pages[edit_page].rotation % 180 == 90:
+        converted_dimensions = (
+            math.floor(pdf.pages[edit_page].mediabox[3] * dimensions[0]),
+            math.floor(pdf.pages[edit_page].mediabox[2] * dimensions[1]),
+        )
 
-    # In my testing this formula was the most accurate to what the user sees.
-    converted_location = (
-        math.floor(pdf.pages[0].mediabox[2] * location[0]),
-        math.floor(pdf.pages[0].mediabox[3] * location[1]),
-    )
-    if font_percetage:
-        converted_font_size = pdf.pages[0].mediabox[3] * font_percetage
-        print([converted_dimensions, converted_location, converted_font_size])
-        return [converted_dimensions, converted_location, converted_font_size]
+        # In my testing this formula was the most accurate to what the user sees.
+        converted_location = (
+            math.floor(pdf.pages[edit_page].mediabox[3] * location[0]),
+            math.floor(pdf.pages[edit_page].mediabox[2] * location[1]),
+        )
+        if font_percetage:
+            converted_font_size = pdf.pages[edit_page].mediabox[2] * font_percetage
+            return [converted_dimensions, converted_location, converted_font_size]
+    else:
+        converted_dimensions = (
+            math.floor(pdf.pages[edit_page].mediabox[2] * dimensions[0]),
+            math.floor(pdf.pages[edit_page].mediabox[3] * dimensions[1]),
+        )
+
+        # In my testing this formula was the most accurate to what the user sees.
+        converted_location = (
+            math.floor(pdf.pages[edit_page].mediabox[2] * location[0]),
+            math.floor(pdf.pages[edit_page].mediabox[3] * location[1]),
+        )
+
+        if font_percetage:
+            converted_font_size = pdf.pages[edit_page].mediabox[3] * font_percetage
+            return [converted_dimensions, converted_location, converted_font_size]
 
     print([converted_dimensions, converted_location])
     return [converted_dimensions, converted_location]
@@ -223,6 +269,7 @@ def merge_pdfs(
     exclude_pages = exclude_pages or []
     overlay_pdf_path = Path(overlay_pdf_path).resolve()
     output_path = Path(output_path).resolve()
+    print(start_loc)
 
     if not is_final:
         output_path = temp_loop_pdf
@@ -235,6 +282,7 @@ def merge_pdfs(
         writer = PdfWriter()
 
         for page_num, page in enumerate(base_pdf.pages, start=1):
+            page.transfer_rotation_to_content()
             if invert:
                 if page_num in exclude_pages:
                     page.merge_translated_page(

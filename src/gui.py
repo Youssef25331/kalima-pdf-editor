@@ -37,7 +37,7 @@ class MyGui:
         if self.pdf:
             self.root.destroy()  # Close the original window
             self.open_pdf_window()
-        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF2.pdf"
         # self.root.destroy()
         # self.open_pdf_window()
 
@@ -139,10 +139,10 @@ class MyGui:
 
         # setup icons
         self.left_arrow = ct.CTkImage(
-            dark_image=Image.open("./assets/white-left-arrow.png")
+        dark_image = Image.open(pdf_editor.get_base_path() / "assets" / "white-left-arrow.png")
         )
         self.right_arrow = ct.CTkImage(
-            dark_image=Image.open("./assets/white-right-arrow.png")
+        dark_image = Image.open(pdf_editor.get_base_path() / "assets" / "white-right-arrow.png")
         )
 
         # setup page movment
@@ -716,7 +716,7 @@ class MyGui:
             item["panel"].configure(text_color=color)
             item["text_color"] = color
 
-    def set_background(self, image_location="Temp/temp_background.png"):
+    def set_background(self, image_location="Temp/Temp"):
         self.pdf_page_count = pdf_editor.convert_pdf_page(
             self.pdf, self.current_page_number, image_location
         )
@@ -747,42 +747,46 @@ class MyGui:
         )
         if not save_path:
             return
+
         pdf_editor.setup_loop_file(self.pdf)
         deleted = 0
         for item in self.editing_items:
-            is_final = False
-            if item["index"] == len(self.editing_items) - 1:
-                is_final = True
-            if "deleted" not in item:
-                if "image" in item:
-                    item_translations = pdf_editor.percentage_converter(
-                        self.pdf,
-                        (item["width_percent"], item["height_percent"]),
-                        (item["relative_x"], item["relative_y"]),
-                    )
-                    pdf_editor.resize_and_save_image(
-                        item["image_location"],
-                        item["opacity"],
-                        item_translations[0][0],
-                        item_translations[0][1],
-                        item["panel"]._fg_color,
-                    )
-                else:
-                    item_translations = pdf_editor.percentage_converter(
-                        self.pdf,
-                        (item["width_percent"], item["height_percent"]),
-                        (item["relative_x"], item["relative_y"]),
-                        item["relative_font_size"],
-                    )
-                    pdf_editor.create_text_pdf(
-                        item["text"],
-                        (item_translations[0][0], item_translations[0][1]),
-                        item["opacity"],
-                        bg_color=item["bg_color"],
-                        text_color=item["text_color"],
-                        font_family=item["font_family"],
-                        font_size=item_translations[2],
-                    )
+            try:
+                is_final = False
+                if item["index"] == len(self.editing_items) - 1:
+                    is_final = True
+                if "deleted" not in item:
+                    if "image" in item:
+                        item_translations = pdf_editor.percentage_converter(
+                            self.pdf,
+                            (item["width_percent"], item["height_percent"]),
+                            (item["relative_x"], item["relative_y"]),
+                            edit_page=self.current_page_number,
+                        )
+                        pdf_editor.resize_and_save_image(
+                            item["image_location"],
+                            item["opacity"],
+                            item_translations[0][0],
+                            item_translations[0][1],
+                            item["panel"]._fg_color,
+                        )
+                    else:
+                        item_translations = pdf_editor.percentage_converter(
+                            self.pdf,
+                            (item["width_percent"], item["height_percent"]),
+                            (item["relative_x"], item["relative_y"]),
+                            item["relative_font_size"],
+                            edit_page=self.current_page_number,
+                        )
+                        pdf_editor.create_text_pdf(
+                            item["text"],
+                            (item_translations[0][0], item_translations[0][1]),
+                            item["opacity"],
+                            bg_color=item["bg_color"],
+                            text_color=item["text_color"],
+                            font_family=item["font_family"],
+                            font_size=item_translations[2],
+                        )
                     pdf_editor.merge_pdfs(
                         save_path,
                         item_translations[0][1],
@@ -791,8 +795,19 @@ class MyGui:
                         self.exclusion_list,
                         invert=self.is_include,
                     )
-            else:
-                deleted += 1
+                else:
+                    deleted += 1
+            except Exception as e:
+                self.show_popup_window(
+                    self.pdf_window,
+                    "Error",
+                    "Uknown Error!",
+                    self.fail,
+                    str(e) + "\nMake sure not to open the file while editing.",
+                    self.text_color,
+                )
+                print("Unkown error!")
+                return
         if deleted == len(self.editing_items):
             self.show_popup_window(
                 self.pdf_window,
@@ -803,6 +818,16 @@ class MyGui:
                 self.text_color,
                 20,
             )
+            return
+        self.show_popup_window(
+            self.pdf_window,
+            "Success",
+            "Success!",
+            self.success,
+            "Successfully Converted the PDF File.",
+            self.text_color,
+            20,
+        )
 
     def add_image(self):
         loaded_logo = ct.filedialog.askopenfilename(
@@ -1056,11 +1081,23 @@ class MyGui:
         text_pading=0,
     ):
         popup = ct.CTkToplevel(parent, fg_color=self.dark)
+        popup_width = 600
+        popup_height = 250
         popup.title(title)
         popup.grab_set()
         popup.configure()
-        popup.minsize(600, 250)
-        popup.maxsize(600, 250)
+        popup.minsize(popup_width, popup_height)
+        popup.maxsize(popup_width, popup_height)
+
+        parent_x = parent.winfo_x()
+        parent_y = parent.winfo_y()
+        parent_width = parent.winfo_width()
+        parent_height = parent.winfo_height()
+
+        pos_x = parent_x + (parent_width // 2) - (popup_width // 2)
+        pos_y = parent_y + (parent_height // 2) - (popup_height // 2)
+
+        popup.geometry(f"{popup_width}x{popup_height}+{pos_x}+{pos_y}")
 
         popup_label = ct.CTkLabel(
             popup,
@@ -1076,7 +1113,7 @@ class MyGui:
             text_color=text_color,
             font=(self.global_font_family, 18, self.global_font_style),
         )
-
+        # popup.overrideredirect(True)
         popup_label.pack(pady=label_pading)
         popup_text.pack(pady=text_pading)
 
