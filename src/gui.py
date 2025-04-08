@@ -20,7 +20,7 @@ class MyGui:
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
-            text="Select PDF \n(Or Drag Here)",
+            text="Select PDF",
             height=50,
             command=self.browse_pdf,
             fg_color="#111f28",
