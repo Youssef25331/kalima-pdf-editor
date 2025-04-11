@@ -135,15 +135,18 @@ class AskColor(customtkinter.CTkToplevel):
         )
         self.slider.pack(fill="both", pady=(0, 15), padx=20 - self.slider_border)
 
-        self.label = customtkinter.CTkLabel(
+        self.entry = customtkinter.CTkEntry(
             master=self.frame,
+            justify="center",
             text_color="#000000",
             height=50,
             fg_color=self.default_hex_color,
             corner_radius=self.corner_radius,
-            text=self.default_hex_color,
         )
-        self.label.pack(fill="both", padx=10)
+        self.entry.insert(0, str(self.default_hex_color))
+
+        self.entry.pack(fill="both", padx=10)
+        self.entry.bind("<Return>", self.update_colors_entry)
 
         self.button = customtkinter.CTkButton(
             master=self.frame,
@@ -157,17 +160,17 @@ class AskColor(customtkinter.CTkToplevel):
         )
         self.button.pack(fill="both", padx=10, pady=20)
 
-        self.after(150, lambda: self.label.focus())
+        self.after(150, lambda: self.entry.focus())
 
         self.grab_set()
 
     def get(self):
-        self._color = self.label._fg_color
+        self._color = self.entry._fg_color
         self.master.wait_window(self)
         return self._color
 
     def _ok_event(self, event=None):
-        self._color = self.label._fg_color
+        self._color = self.entry._fg_color
         self.grab_release()
         self.destroy()
         del self.img1
@@ -239,17 +242,50 @@ class AskColor(customtkinter.CTkToplevel):
         self.default_hex_color = "#{:02x}{:02x}{:02x}".format(*self.rgb_color)
 
         self.slider.configure(progress_color=self.default_hex_color)
-        self.label.configure(fg_color=self.default_hex_color)
+        self.entry.configure(fg_color=self.default_hex_color)
 
-        self.label.configure(text=str(self.default_hex_color))
+        self.entry.delete(0, "end")
+        self.entry.insert(0, str(self.default_hex_color))
 
         if self.brightness_slider_value.get() < 70:
-            self.label.configure(text_color="white")
+            self.entry.configure(text_color="white")
         else:
-            self.label.configure(text_color="black")
+            self.entry.configure(text_color="black")
 
-        if str(self.label._fg_color) == "black":
-            self.label.configure(text_color="white")
+        if str(self.entry._fg_color) == "black":
+            self.entry.configure(text_color="white")
+
+    def update_colors_entry(self, event=None):
+        color = self.entry.get()
+        self.default_hex_color = color
+        self.slider.configure(progress_color=self.default_hex_color)
+        self.entry.configure(fg_color=self.default_hex_color)
+
+        hex_color = self.default_hex_color.lstrip("#")
+
+        if len(hex_color) == 3:
+            # Expand 3-digit to 6-digit (e.g., F00 -> FF0000)
+            r = int(hex_color[0] * 2, 16)
+            g = int(hex_color[1] * 2, 16)
+            b = int(hex_color[2] * 2, 16)
+        elif len(hex_color) == 6:
+            # Parse 6-digit hex code
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+        else:
+            raise ValueError("Invalid hex color format. Use #RGB or #RRGGBB.")
+
+        brightness = 0.299 * r + 0.587 * g + 0.114 * b
+        self.slider.set(brightness)
+
+        if self.brightness_slider_value.get() < 70:
+            self.entry.configure(text_color="white")
+        else:
+            self.entry.configure(text_color="black")
+
+        if str(self.entry._fg_color) == "black":
+            self.entry.configure(text_color="white")
 
     def projection_on_circle(self, point_x, point_y, circle_x, circle_y, radius):
         angle = math.atan2(point_y - circle_y, point_x - circle_x)

@@ -69,6 +69,7 @@ class MyGui:
         self.global_font_style = "bold"
 
         self.pdf_window.configure(fg_color=self.dark)
+
         # The side panel with differnt tools
         self.side_panel = ct.CTkFrame(self.pdf_window, corner_radius=0, width=200)
         self.side_panel.pack(side="left", fill="both", padx=0, pady=0)
@@ -139,10 +140,14 @@ class MyGui:
 
         # setup icons
         self.left_arrow = ct.CTkImage(
-        dark_image = Image.open(pdf_editor.get_base_path() / "assets" / "white-left-arrow.png")
+            dark_image=Image.open(
+                pdf_editor.get_base_path() / "assets" / "white-left-arrow.png"
+            )
         )
         self.right_arrow = ct.CTkImage(
-        dark_image = Image.open(pdf_editor.get_base_path() / "assets" / "white-right-arrow.png")
+            dark_image=Image.open(
+                pdf_editor.get_base_path() / "assets" / "white-right-arrow.png"
+            )
         )
 
         # setup page movment
