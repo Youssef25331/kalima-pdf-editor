@@ -1,6 +1,6 @@
 import math, os, sys
 from pypdf import PdfReader, PdfWriter
-from pdf2image import convert_from_path
+import pymupdf
 from PIL import Image
 from fpdf import FPDF
 from fontTools.ttLib import TTFont
@@ -44,7 +44,7 @@ else:
 
 
 # Construct the path to Poppler binaries
-poppler_path = os.path.join(get_base_path(), "poppler-24.08.0", "Library", "bin")
+# poppler_path = os.path.join(get_base_path(), "poppler-24.08.0", "Library", "bin")
 
 
 def setup_loop_file(source_file, dest_file=temp_loop_pdf):
@@ -144,7 +144,7 @@ def create_text_pdf(
     pdf.set_fill_color(*bg_rgb)
     pdf.set_font(font_family, size=int(math.floor(font_size)))
 
-    if opacity and bg_opacity == 1:
+    if opacity == 1 and bg_opacity == 1:
         pdf.rect(
             0, 0, 9999, 9999, style="F"
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
@@ -158,22 +158,15 @@ def create_text_pdf(
         )
         pdf.output(output_path)
 
-    elif bg_opacity != 1:
+    elif opacity == 0:
+        pdf.output(output_path)
+
+    else:
         pdf.rect(
             0, 0, 9999, 9999, style="F"
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
         pdf.output(output_path)
         convert_pdf_page(output_path, 1, temp_bg)
-        img = Image.open(temp_bg).convert("RGBA")
-        img = img.resize(
-            (dimensions[0], dimensions[1]), Image.Resampling.LANCZOS
-        )  # Better quality resizing
-        background = Image.new(
-            "RGBA", (dimensions[0], dimensions[1]), bg_rgb + (255,)
-        )  # Add alpha channel
-        background.paste(img, (0, 0), mask=img)
-        background.putalpha(int(255 * bg_opacity))
-        background.save(temp_bg, "PDF")
 
         text_pdf = FPDF("P", "pt", dimensions)
         text_pdf.set_margins(0, 0)
@@ -191,67 +184,36 @@ def create_text_pdf(
         )
         text_pdf.output(output_path)
         convert_pdf_page(temp_pdf, 1, temp_text)
+
         img = Image.open(temp_text).convert("RGBA")
         img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+
         bg_img = Image.open(temp_bg).convert("RGBA")
-        bg_img.paste(img, (0, 0))
-        bg_img.save(temp_text, "PNG")
-        bg_img.putalpha(int(255 * opacity))
+        bg_img = bg_img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+        bg_img.putalpha(int(255 * bg_opacity * opacity))
 
-    if opacity == 100:
-        convert_pdf_page(temp_pdf, 1, temp_text)
-        img = Image.open(temp_text).convert("RGBA")
-        img = img.resize(
-            (dimensions[0], dimensions[1]), Image.Resampling.LANCZOS
-        )  # Better quality resizing
-        bg_rgb = hex_to_rgb(bg_color)
-        background = Image.new(
-            "RGBA", (dimensions[0], dimensions[1]), bg_rgb + (255,)
-        )  # Add alpha channel
-        background.paste(img, (0, 0), mask=img)
-        background.putalpha(int(255 * opacity))
-        background.save(output_path, "PDF")
-
-
-# def get_num_of_lines_in_multicell(pdf, message):
-#     # divide the string in words
-#     words = message.split(" ")
-#     line = ""
-#     n = 1
-#     for word in words:
-#         line += word + " "
-#         line_width = pdf.get_string_width(line)
-#         # In the next if it is necessary subtract 1 to the WIDTH
-#         if line_width > 200 - 1:
-#             # the multi_cell() insert a line break
-#             n += 1
-#             line = word + " "
-#     print(n)
-#     return n
-
-# converts a page to a PNG to be loaded in GUI
+        layer = Image.new("RGBA", bg_img.size, (0, 0, 0, 0))
+        layer.paste(img, (0, 0))
+        layer2 = layer.copy()
+        layer2.putalpha(int(255 * opacity))
+        layer.paste(layer2, (0, 0), layer)
+        result = Image.alpha_composite(bg_img, layer)
+        result.save(temp_pdf, "PDF")
 
 
 def convert_pdf_page(pdf_path, page_number, output):
     try:
-        # Convert specific page to image
-        images = convert_from_path(
-            pdf_path,
-            first_page=page_number, 
-            last_page=page_number,  
-            dpi=200,
-            poppler_path=poppler_path,
-            transparent=True,
-        )
-
-        if images:
-            setup_temp_dir()
-            images[0].save(output, "PNG")
-            return PdfReader(pdf_path).get_num_pages()
-        else:
-            print("Conversion failed: No image generated")
-            return False
-
+        setup_temp_dir()
+        doc = pymupdf.open(pdf_path)
+        page = doc[page_number - 1]
+        pix = page.get_pixmap(
+            matrix=pymupdf.Matrix(200 / 72, 200 / 72), alpha=True
+        )  # DPI 200, with alpha
+        pix.pil_save(output, format="PNG", optimize=True)
+        return PdfReader(pdf_path).get_num_pages()
+    except FileNotFoundError as e:
+        print(f"Error: {str(e)}")
+        return False
     except Exception as e:
         print(f"Error: {str(e)}")
         return False

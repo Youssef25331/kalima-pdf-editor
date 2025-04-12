@@ -15,7 +15,7 @@ class MyGui:
         self.root.geometry("400x500")
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
-        self.browse_pdf()
+        # self.browse_pdf()
 
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
@@ -31,15 +31,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        # self.pdf = ct.filedialog.askopenfilename(
-        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        # )
-        # if self.pdf:
-        #     self.root.destroy()  # Close the original window
-        #     self.open_pdf_window()
-        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF2.pdf"
-        self.root.destroy()
-        self.open_pdf_window()
+        self.pdf = ct.filedialog.askopenfilename(
+            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        )
+        if self.pdf:
+            self.root.destroy()  # Close the original window
+            self.open_pdf_window()
+        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF2.pdf"
+        # self.root.destroy()
+        # self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -619,7 +619,12 @@ class MyGui:
             item["panel"].configure(text=input_text)
 
     def bg_color_picker(self):
-        pick_color = CTkColorPicker.AskColor()
+        pick_color = CTkColorPicker.AskColor(
+            bg_color=self.dark,
+            fg_color=self.second_dark,
+            button_color=self.main,
+            button_hover_color=self.main_hover,
+        )
         color = pick_color.get()
         if color:
             item = self.editing_items[self.current_item]
@@ -713,7 +718,12 @@ class MyGui:
             self.font_size_label.configure(text="Font Size: " + str(item["font_size"]))
 
     def text_color_picker(self):
-        pick_color = CTkColorPicker.AskColor()
+        pick_color = CTkColorPicker.AskColor(
+            bg_color=self.dark,
+            fg_color=self.second_dark,
+            button_color=self.main,
+            button_hover_color=self.main_hover,
+        )
         color = pick_color.get()
         item = self.editing_items[self.current_item]
         if color and "text" in item:
