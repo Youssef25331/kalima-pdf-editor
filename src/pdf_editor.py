@@ -32,8 +32,9 @@ def setup_temp_dir():
 temp_dir = setup_temp_dir()
 temp_pdf = temp_dir / "Temp.pdf"
 temp_loop_pdf = temp_dir / "Loop.pdf"
-temp_background = temp_dir / "Temp.png"
+temp_background = temp_dir / "Temp"
 temp_text = temp_dir / "Temp_Text.png"
+temp_bg = temp_dir / "Temp_bg.png"
 
 
 if getattr(sys, "frozen", False):
@@ -116,9 +117,10 @@ def create_text_pdf(
     opacity,
     text_color="000000",
     bg_color=None,
-    font_family="helvetica",
+    font_family="arial",
     font_size=None,
     output_path=temp_pdf,
+    bg_opacity=1,
 ):
     # Create a PDF with text at specified dimensions, with optional text and background colors.
     pdf = FPDF("P", "pt", dimensions)
@@ -138,24 +140,65 @@ def create_text_pdf(
     if not font_size:
         font_size = int(dimensions[0] * 0.09)
 
-    if bg_color:
-        bg_rgb = hex_to_rgb(bg_color)
-        pdf.set_fill_color(*bg_rgb)
+    bg_rgb = hex_to_rgb(bg_color)
+    pdf.set_fill_color(*bg_rgb)
+    pdf.set_font(font_family, size=int(math.floor(font_size)))
+
+    if opacity and bg_opacity == 1:
         pdf.rect(
             0, 0, 9999, 9999, style="F"
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
+        pdf.cell(
+            dimensions[0],
+            dimensions[1],
+            txt=normalized_text,
+            align="C",
+            ln=0,
+            border=0,
+        )
+        pdf.output(output_path)
 
-    pdf.set_font(font_family, size=int(math.floor(font_size)))
-    pdf.cell(
-        dimensions[0],
-        dimensions[1],
-        txt=normalized_text,
-        align="C",
-        ln=0,
-        border=0,
-    )
-    pdf.output(output_path)
-    if opacity != 1:
+    elif bg_opacity != 1:
+        pdf.rect(
+            0, 0, 9999, 9999, style="F"
+        )  # I don't remember why I set those to 9999 but im sure there was a good reason.
+        pdf.output(output_path)
+        convert_pdf_page(output_path, 1, temp_bg)
+        img = Image.open(temp_bg).convert("RGBA")
+        img = img.resize(
+            (dimensions[0], dimensions[1]), Image.Resampling.LANCZOS
+        )  # Better quality resizing
+        background = Image.new(
+            "RGBA", (dimensions[0], dimensions[1]), bg_rgb + (255,)
+        )  # Add alpha channel
+        background.paste(img, (0, 0), mask=img)
+        background.putalpha(int(255 * bg_opacity))
+        background.save(temp_bg, "PDF")
+
+        text_pdf = FPDF("P", "pt", dimensions)
+        text_pdf.set_margins(0, 0)
+        text_pdf.set_auto_page_break(False)
+        text_pdf.add_page()
+        text_pdf.set_text_color(*text_rgb)
+        text_pdf.set_font(font_family, size=int(math.floor(font_size)))
+        text_pdf.cell(
+            dimensions[0],
+            dimensions[1],
+            txt=normalized_text,
+            align="C",
+            ln=0,
+            border=0,
+        )
+        text_pdf.output(output_path)
+        convert_pdf_page(temp_pdf, 1, temp_text)
+        img = Image.open(temp_text).convert("RGBA")
+        img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+        bg_img = Image.open(temp_bg).convert("RGBA")
+        bg_img.paste(img, (0, 0))
+        bg_img.save(temp_text, "PNG")
+        bg_img.putalpha(int(255 * opacity))
+
+    if opacity == 100:
         convert_pdf_page(temp_pdf, 1, temp_text)
         img = Image.open(temp_text).convert("RGBA")
         img = img.resize(
@@ -194,10 +237,11 @@ def convert_pdf_page(pdf_path, page_number, output):
         # Convert specific page to image
         images = convert_from_path(
             pdf_path,
-            first_page=page_number,  # Convert to 1-based
-            last_page=page_number,  # Only convert one page
+            first_page=page_number, 
+            last_page=page_number,  
             dpi=200,
             poppler_path=poppler_path,
+            transparent=True,
         )
 
         if images:

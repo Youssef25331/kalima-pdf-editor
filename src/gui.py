@@ -15,7 +15,7 @@ class MyGui:
         self.root.geometry("400x500")
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
-        # self.browse_pdf()
+        self.browse_pdf()
 
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
@@ -31,15 +31,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        self.pdf = ct.filedialog.askopenfilename(
-            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        )
-        if self.pdf:
-            self.root.destroy()  # Close the original window
-            self.open_pdf_window()
-        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF2.pdf"
-        # self.root.destroy()
-        # self.open_pdf_window()
+        # self.pdf = ct.filedialog.askopenfilename(
+        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        # )
+        # if self.pdf:
+        #     self.root.destroy()  # Close the original window
+        #     self.open_pdf_window()
+        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF2.pdf"
+        self.root.destroy()
+        self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -791,6 +791,7 @@ class MyGui:
                             text_color=item["text_color"],
                             font_family=item["font_family"],
                             font_size=item_translations[2],
+                            bg_opacity=item["bg_opacity"],
                         )
                     pdf_editor.merge_pdfs(
                         save_path,
