@@ -60,8 +60,22 @@ def hex_to_rgb(hex_color):
     return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
+def generate_modified_fonts():
+    if not (font_dir / "Modified").exists():
+        (font_dir / "Modified").mkdir()
+
+    for font_path in font_dir.glob("*.ttf"):
+        font = TTFont(font_path)
+        font["OS/2"].fsType = 0
+        font_file = (
+            font_dir / "Modified" / ("_Modified_" + str(font_path).split("\\")[-1])
+        )
+        if not font_file.exists():
+            font.save(font_file)
+
+
 # For importing fonts into FPDF
-def load_project_fonts():
+def load_project_fonts(generate=True):
     # Define the "fonts" folder relative to the project root
     fonts = []
     if not font_dir.exists():
@@ -70,9 +84,14 @@ def load_project_fonts():
         return [("Arial", None, None)]
     elif not any(font_dir.iterdir()):  # Check if directory is empty
         return [("Arial", None, None)]
-    for font_path in font_dir.glob("*.ttf"):
+    if generate:
+        generate_modified_fonts()
+    for font_path in (font_dir / "Modified").glob("*.ttf"):
         font_name = Path(font_path)
         font = TTFont(font_path)
+        if "OS/2" in font:
+            if font["OS/2"].fsType != 0:
+                break
         font_name = font["name"].getDebugName(4)
         fonts.append((font_name, font_path, font_path))
     return fonts
@@ -132,7 +151,7 @@ def create_text_pdf(
     reshaped_text = arabic_reshaper.reshape(text)  # Connects letters
     normalized_text = get_display(reshaped_text)
     pdf.set_text_color(*text_rgb)
-    fonts = load_project_fonts()
+    fonts = load_project_fonts(False)
     for font_name, font_path, _ in fonts:
         if font_path:
             pdf.add_font(font_name, "", str(font_path), uni=True)
@@ -201,13 +220,13 @@ def create_text_pdf(
         result.save(temp_pdf, "PDF")
 
 
-def convert_pdf_page(pdf_path, page_number, output):
+def convert_pdf_page(pdf_path, page_number, output, alpha=True):
     try:
         setup_temp_dir()
         doc = pymupdf.open(pdf_path)
         page = doc[page_number - 1]
         pix = page.get_pixmap(
-            matrix=pymupdf.Matrix(200 / 72, 200 / 72), alpha=True
+            matrix=pymupdf.Matrix(200 / 72, 200 / 72), alpha=alpha
         )  # DPI 200, with alpha
         pix.pil_save(output, format="PNG", optimize=True)
         return PdfReader(pdf_path).get_num_pages()
