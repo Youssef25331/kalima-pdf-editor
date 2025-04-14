@@ -14,9 +14,9 @@ class MyGui:
         self.root = root
         self.root.geometry("400x500")
         self.root.minsize(400, 500)
-        self.root.title("Kalima-PDF-Editor")
+        self.root.title("Kalima PDF Editor")
         self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
-        # self.browse_pdf()
+        self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
@@ -31,21 +31,21 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        self.pdf = ct.filedialog.askopenfilename(
-            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        )
-        if self.pdf:
-            self.root.destroy()  # Close the original window
-            self.open_pdf_window()
-        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        # self.root.destroy()
-        # self.open_pdf_window()
+        # self.pdf = ct.filedialog.askopenfilename(
+        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        # )
+        # if self.pdf:
+        #     self.root.destroy()  # Close the original window
+        #     self.open_pdf_window()
+        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        self.root.destroy()
+        self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
         self.pdf_window = ct.CTk()
         self.pdf_window.geometry("700x600")
-        self.pdf_window.title("PDF Editor")
+        self.pdf_window.title("Editor")
         self.pdf_window.minsize(600, 200)
         self.exclusion_list = []
         self.is_include = False
@@ -260,8 +260,6 @@ class MyGui:
             font=(self.global_font_family, 16),
             command=self.convert_pdf,
         )
-
-        # Configure rows.
 
         # Configure columns to be equal width.
         self.top_frame.columnconfigure((0, 1, 2, 3), weight=1, uniform="column")
@@ -903,6 +901,8 @@ class MyGui:
             "start_y": 0,
             "relative_x": 0,
             "relative_y": 0,
+            "frame_x": 0,
+            "frame_y": 0,
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#FFFFFF",
@@ -947,6 +947,8 @@ class MyGui:
             "start_y": 0,
             "relative_x": 0,
             "relative_y": 0,
+            "frame_x": 0,
+            "frame_y": 0,
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#000000",
@@ -994,6 +996,12 @@ class MyGui:
             font_height_px = item["font_size"]
             font_percentage = font_height_px / self.rendered_pdf_height
             item["relative_font_size"] = font_percentage
+        return (
+            item_position_x / self.image_frame.winfo_width()
+            + ((item_width / self.image_frame.winfo_width()) / 2),
+            item_position_y / self.image_frame.winfo_height()
+            + ((item_height / self.image_frame.winfo_height()) / 2),
+        )
 
     def start_action(self, event, item):
         self.current_item = item["index"]
@@ -1027,6 +1035,7 @@ class MyGui:
             self.do_drag(event, item)
 
     def do_resize(self, event, item):
+        item["panel"].place(relx=0, rely=0)
         new_width = item["panel"].winfo_width()
         new_height = item["panel"].winfo_height()
         if item["resize_edge"] == "bottom":
@@ -1058,10 +1067,17 @@ class MyGui:
         )
 
     def stop_action(self, event, item):
-        self.calulate_relative_dimensions(item)
+        location = self.calulate_relative_dimensions(item)
+        item["panel"].place(
+            x=0,
+            y=0,
+            relx=location[0],
+            rely=location[1],
+        )
         self.image_frame.configure(cursor="")
 
     def do_drag(self, event, item):
+        item["panel"].place(rely=0, relx=0)
         image_position_x = item["panel"].winfo_x()
         image_position_y = item["panel"].winfo_y()
         drag_width = item["panel"].winfo_width()
