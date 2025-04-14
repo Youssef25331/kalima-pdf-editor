@@ -15,8 +15,8 @@ class MyGui:
         self.root.geometry("400x500")
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
-        self.browse_pdf()
-
+        self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
+        # self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
@@ -31,15 +31,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        # self.pdf = ct.filedialog.askopenfilename(
-        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        # )
-        # if self.pdf:
-        #     self.root.destroy()  # Close the original window
-        #     self.open_pdf_window()
-        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        self.root.destroy()
-        self.open_pdf_window()
+        self.pdf = ct.filedialog.askopenfilename(
+            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        )
+        if self.pdf:
+            self.root.destroy()  # Close the original window
+            self.open_pdf_window()
+        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        # self.root.destroy()
+        # self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -52,6 +52,7 @@ class MyGui:
         self.editing_items = []
         self.current_item = -1
         self.pdf_window.bind("<Delete>", self.delete_item)
+        self.pdf_window.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
 
         # UI
         self.main = "#111f28"
@@ -625,6 +626,12 @@ class MyGui:
             button_color=self.main,
             button_hover_color=self.main_hover,
         )
+        pick_color.after(
+            200,
+            lambda: pick_color.iconbitmap(
+                pdf_editor.get_base_path() / "assets" / "logo.ico"
+            ),
+        )
         color = pick_color.get()
         if color:
             item = self.editing_items[self.current_item]
@@ -723,6 +730,12 @@ class MyGui:
             fg_color=self.second_dark,
             button_color=self.main,
             button_hover_color=self.main_hover,
+        )
+        pick_color.after(
+            200,
+            lambda: pick_color.iconbitmap(
+                pdf_editor.get_base_path() / "assets" / "logo.ico"
+            ),
         )
         color = pick_color.get()
         item = self.editing_items[self.current_item]
@@ -861,6 +874,8 @@ class MyGui:
             initialdir=Path.cwd(),
             filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif *.bmp *.tiff *.webp")],
         )
+        if not loaded_logo:
+            return
         new_image = Image.open(loaded_logo).convert("RGBA")  # Ensure RGBA mode
         size = (120, int(120 * new_image.size[1] / new_image.size[0]))
         overlay_image = ct.CTkImage(
@@ -1115,6 +1130,7 @@ class MyGui:
         popup.configure()
         popup.minsize(popup_width, popup_height)
         popup.maxsize(popup_width, popup_height)
+        popup.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
 
         parent_x = parent.winfo_x()
         parent_y = parent.winfo_y()
@@ -1143,6 +1159,12 @@ class MyGui:
         # popup.overrideredirect(True)
         popup_label.pack(pady=label_pading)
         popup_text.pack(pady=text_pading)
+        popup.after(
+            200,
+            lambda: popup.iconbitmap(
+                pdf_editor.get_base_path() / "assets" / "logo.ico"
+            ),
+        )
 
 
 root = ct.CTk()
