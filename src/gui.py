@@ -17,7 +17,7 @@ class MyGui:
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
         self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
-        self.browse_pdf()
+        # self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
@@ -32,15 +32,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        # self.pdf = ct.filedialog.askopenfilename(
-        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        # )
-        # if self.pdf:
-        #     self.root.destroy()  # Close the original window
-        #     self.open_pdf_window()
-        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        self.root.destroy()
-        self.open_pdf_window()
+        self.pdf = ct.filedialog.askopenfilename(
+            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        )
+        if self.pdf:
+            self.root.destroy()  # Close the original window
+            self.open_pdf_window()
+        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        # self.root.destroy()
+        # self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -622,7 +622,6 @@ class MyGui:
         item = self.editing_items[self.current_item]
         if "text" in item:
             item["text"] = input_text
-            item["panel"].configure(text=input_text)
             item["panel_clone"].configure(text=input_text)
 
     def bg_color_picker(self):
@@ -654,7 +653,7 @@ class MyGui:
         pywinstyles.set_opacity(
             item["panel_clone"],
             color="black",
-            value=item["opacity"] * item["bg_opacity"],
+            value=item["opacity"],
         )
         self.opacity_entry.delete(0, "end")
         self.opacity_entry.insert(0, str(item["opacity"]))
@@ -674,7 +673,7 @@ class MyGui:
                 pywinstyles.set_opacity(
                     item["panel_clone"],
                     color="black",
-                    value=item["opacity"] * item["bg_opacity"],
+                    value=item["opacity"],
                 )
             else:
                 self.show_popup_window(
@@ -749,7 +748,9 @@ class MyGui:
     def font_size_picker(self, value):
         item = self.editing_items[self.current_item]
         if "text" in item:
-            item["panel"].configure(font=(item["font_family"], value))
+            item["panel"].configure(
+                text=item["text"], font=(item["font_family"], value)
+            )
             item["panel_clone"].configure(font=(item["font_family"], value))
             item["font_size"] = round(value)
             self.font_size_label.configure(text="Font Size: " + str(item["font_size"]))
@@ -955,7 +956,7 @@ class MyGui:
     def add_text(self):
         drag_panel = ct.CTkLabel(
             self.background_panel,
-            text="Your text",
+            text="",
             text_color="#FFFFFF",
             fg_color="#000000",
             width=120,
