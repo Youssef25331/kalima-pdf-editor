@@ -52,6 +52,9 @@ class MyGui:
         self.editing_items = []
         self.current_item = -1
         self.pdf_window.bind("<Delete>", self.delete_item)
+        self.mouse_frame_position_x = 0
+        self.mouse_frame_position_y = 0
+
         self.pdf_window.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
 
         # UI
@@ -286,6 +289,7 @@ class MyGui:
         self.image_frame = ct.CTkFrame(self.pdf_window, fg_color=self.second_dark)
         self.image_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
         self.background_panel = ct.CTkLabel(self.image_frame, text="")
+        self.pdf_window.bind("<Motion>", self.set_mouse_pos)
 
         # Bind the resize event to the image frame (not the whole window).
         self.image_frame.bind("<Configure>", self.resize_image)
@@ -899,6 +903,8 @@ class MyGui:
             "resize_edge": None,
             "start_x": 0,
             "start_y": 0,
+            "start_width": 0,
+            "start_height": 0,
             "relative_x": 0,
             "relative_y": 0,
             "frame_x": 0,
@@ -945,6 +951,8 @@ class MyGui:
             "resize_edge": None,
             "start_x": 0,
             "start_y": 0,
+            "start_width": 0,
+            "start_height": 0,
             "relative_x": 0,
             "relative_y": 0,
             "frame_x": 0,
@@ -1006,7 +1014,7 @@ class MyGui:
     def start_action(self, event, item):
         self.current_item = item["index"]
         self.update_side_panel()
-        x, y = event.x, event.y
+
         width = item["panel"].winfo_width()
         height = item["panel"].winfo_height()
         border = 10  # How many pixels near an edge to consider resizing.
@@ -1014,17 +1022,38 @@ class MyGui:
         item["start_y"] = event.y - (height / 2)
         item["x"] = item["panel"].winfo_x()
         item["y"] = item["panel"].winfo_y()
+        # Gets the correct mouse position relative to the window
+        x = self.mouse_frame_position_x - item["x"]
+        y = self.mouse_frame_position_y - item["y"]
+
+        item["start_width"] = item["panel"].winfo_width()
+        item["start_height"] = item["panel"].winfo_height()
 
         # Determine if click is near an edge based on mouse relative position.
         if x >= width - border and y >= height - border:
             item["is_resizing"] = True
-            item["resize_edge"] = "bottom-right"  # Resize from bottom-right corner
+            item["resize_edge"] = "bottom-right"
+        elif x <= border and y <= border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "top-left"
+        elif x <= border and y >= height - border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "bottom-left"
+        elif x >= border and y <= border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "top-right"
         elif x >= width - border:
             item["is_resizing"] = True
             item["resize_edge"] = "right"
+        elif y <= border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "top"
         elif y >= height - border:
             item["is_resizing"] = True
             item["resize_edge"] = "bottom"
+        elif x <= border:
+            item["is_resizing"] = True
+            item["resize_edge"] = "left"
         else:
             item["is_resizing"] = False
 
@@ -1038,19 +1067,61 @@ class MyGui:
         item["panel"].place(relx=0, rely=0)
         new_width = item["panel"].winfo_width()
         new_height = item["panel"].winfo_height()
+        right_side = False
         if item["resize_edge"] == "bottom":
+            right_side = True
             dy = event.y - item["panel"].winfo_height()
-            new_width = item["panel"].winfo_width()
             new_height = item["panel"].winfo_height() + dy
             self.image_frame.configure(cursor="sb_down_arrow")
+        elif item["resize_edge"] == "top":
+            right_side = False
+            dy = event.y * -1
+            new_height = item["panel"].winfo_height() + dy
+            self.image_frame.configure(cursor="sb_up_arrow")
         elif item["resize_edge"] == "right":
+            right_side = True
             dx = event.x - item["panel"].winfo_width()
             new_width = item["panel"].winfo_width() + dx
             self.image_frame.configure(cursor="sb_right_arrow")
-        elif item["resize_edge"] == "bottom-right":
-            dx = event.x - item["panel"].winfo_width()
-            ratio = item["panel"].winfo_width() / item["panel"].winfo_height()
+        elif item["resize_edge"] == "left":
+            dx = event.x * -1
             new_width = item["panel"].winfo_width() + dx
+            self.image_frame.configure(cursor="sb_left_arrow")
+        elif item["resize_edge"] == "bottom-right":
+            right_side = True
+            dx = event.x - item["panel"].winfo_width()
+            new_width = item["panel"].winfo_width() + dx
+            ratio = item["panel"].winfo_width() / item["panel"].winfo_height()
+            if "image" in item:
+                new_height = new_width / ratio
+            else:
+                new_height = item["panel"].winfo_height() + dx
+            self.image_frame.configure(cursor="sizing")
+        elif item["resize_edge"] == "top-left":
+            right_side = False
+            dx = event.x * -1
+            new_width = item["panel"].winfo_width() + dx
+            ratio = item["panel"].winfo_width() / item["panel"].winfo_height()
+            if "image" in item:
+                new_height = new_width / ratio
+            else:
+                new_height = item["panel"].winfo_height() + dx
+            self.image_frame.configure(cursor="sizing")
+        elif item["resize_edge"] == "bottom-left":
+            right_side = False
+            dx = event.x * -1
+            new_width = item["panel"].winfo_width() + dx
+            ratio = item["panel"].winfo_width() / item["panel"].winfo_height()
+            if "image" in item:
+                new_height = new_width / ratio
+            else:
+                new_height = item["panel"].winfo_height() + dx
+            self.image_frame.configure(cursor="sizing")
+        elif item["resize_edge"] == "top-right":
+            right_side = False
+            dx = event.x - item["panel"].winfo_width()
+            new_width = item["panel"].winfo_width() + dx
+            ratio = item["panel"].winfo_width() / item["panel"].winfo_height()
             if "image" in item:
                 new_height = new_width / ratio
             else:
@@ -1062,8 +1133,33 @@ class MyGui:
         else:
             item["panel"].configure(width=new_width, height=new_height)
 
+        if right_side:
+            item["panel"].place(
+                x=((item["x"]) + (new_width / 2)), y=(item["y"] + (new_height / 2))
+            )
+            return
+        elif item["resize_edge"] == "top":
+            item["panel"].place(
+                x=(item["x"]) + (new_width / 2),
+                y=((item["y"] + item["start_height"]) - (new_height / 2)),
+            )
+            return
+        elif item["resize_edge"] == "bottom-left":
+            item["panel"].place(
+                x=((item["x"] + item["start_width"]) - (new_width / 2)),
+                y=(item["y"] + (new_height / 2)),
+            )
+            return
+        elif item["resize_edge"] == "top-right":
+            item["panel"].place(
+                x=((item["x"]) + (new_width / 2)),
+                y=((item["y"] + item["start_height"]) - (new_height / 2)),
+            )
+            return
+
         item["panel"].place(
-            x=(item["x"] + (new_width / 2)), y=(item["y"] + (new_height / 2))
+            x=((item["x"] + item["start_width"]) - (new_width / 2)),
+            y=((item["y"] + item["start_height"]) - (new_height / 2)),
         )
 
     def stop_action(self, event, item):
@@ -1181,6 +1277,14 @@ class MyGui:
                 pdf_editor.get_base_path() / "assets" / "logo.ico"
             ),
         )
+
+    def set_mouse_pos(self, event):
+        self.mouse_frame_position_x = (
+            self.image_frame.winfo_rootx() - event.x_root
+        ) * -1
+        self.mouse_frame_position_y = (
+            self.image_frame.winfo_rooty() - event.y_root
+        ) * -1
 
 
 root = ct.CTk()

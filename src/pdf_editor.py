@@ -238,6 +238,26 @@ def convert_pdf_page(pdf_path, page_number, output, alpha=True):
         return False
 
 
+def convert_pdf_to_image_pdf(
+    input_pdf_path="./output.pdf", output_pdf_path="./THE_output.pdf", dpi=300
+):
+    pdf_doc = pymupdf.open(input_pdf_path)
+    img_pdf = pymupdf.open()
+
+    for page_num in range(pdf_doc.page_count):
+        page = pdf_doc[page_num]
+        pix = page.get_pixmap(matrix=pymupdf.Matrix(200 / 72, 200 / 72), alpha=False)
+
+        new_page = img_pdf.new_page(width=page.rect.width, height=page.rect.height)
+        new_page.insert_image(new_page.rect, stream=pix.tobytes("png"))
+
+    # Save the new PDF
+    img_pdf.save(output_pdf_path, garbage=4, deflate=True)
+    # Close both PDFs
+    pdf_doc.close()
+    img_pdf.close()
+
+
 # Percentage In the case the values where being sent by the GUI
 def percentage_converter(
     pdf_path, dimensions, location, font_percetage=None, edit_page=1
@@ -276,7 +296,6 @@ def percentage_converter(
             converted_font_size = pdf.pages[edit_page].mediabox[3] * font_percetage
             return [converted_dimensions, converted_location, converted_font_size]
 
-    print([converted_dimensions, converted_location])
     return [converted_dimensions, converted_location]
 
 
@@ -293,13 +312,6 @@ def merge_pdfs(
     # Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages.
     exclude_pages = exclude_pages or []
     overlay_pdf_path = Path(overlay_pdf_path).resolve()
-    output_path = Path(output_path).resolve()
-    print(start_loc)
-
-    if not is_final:
-        output_path = temp_loop_pdf
-    else:
-        output_path = Path(output_path).resolve()
 
     try:
         base_pdf = PdfReader(base_pdf_path)
@@ -332,8 +344,10 @@ def merge_pdfs(
                     )
             writer.add_page(page)
 
-        with open(output_path, "wb") as out:
+        with open(temp_loop_pdf, "wb") as out:
             writer.write(out)
+        if is_final:
+            convert_pdf_to_image_pdf(temp_loop_pdf, output_path)
     except FileNotFoundError:
         raise ValueError(f"PDF file not found: {base_pdf_path} or {overlay_pdf_path}")
     except Exception as e:
