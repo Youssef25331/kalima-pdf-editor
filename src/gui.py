@@ -689,7 +689,7 @@ class MyGui:
     def background_opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         panel_clone = item["panel"]
-        panel_clone.place(x=0,y=0)
+        panel_clone.place(x=0, y=0)
         item["bg_opacity"] = round(value, 1)
         self.background_opacity_entry.delete(0, "end")
         self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
@@ -945,12 +945,25 @@ class MyGui:
             font=("Arial", 12),
             anchor="center",
         )
+        drag_panel_clone = ct.CTkLabel(
+            self.background_panel,
+            text="Your text",
+            text_color="#FFFFFF",
+            fg_color="#000000",
+            width=120,
+            height=120,
+            font=("Arial", 12),
+            anchor="center",
+        )
         drag_panel.place(x=0, y=0)
+        drag_panel_clone.place(x=0, y=0)
+        pywinstyles.set_opacity(drag_panel_clone, color="black")
         item = {
             "index": len(self.editing_items),
             "type": "text",
             "text": "Your text",
             "panel": drag_panel,
+            "panel_clone": drag_panel_clone,
             "font_family": "Arial",
             "font_size": 12,
             "relative_font_size": 12,
@@ -1040,7 +1053,7 @@ class MyGui:
         elif x <= border and y >= height - border:
             item["is_resizing"] = True
             item["resize_edge"] = "bottom-left"
-        elif x >= border and y <= border:
+        elif x >= width - border and y <= border:
             item["is_resizing"] = True
             item["resize_edge"] = "top-right"
         elif x >= width - border:
@@ -1068,6 +1081,7 @@ class MyGui:
         new_width = item["panel"].winfo_width()
         new_height = item["panel"].winfo_height()
         right_side = False
+        print(item["resize_edge"])
         if item["resize_edge"] == "bottom":
             right_side = True
             dy = event.y - item["panel"].winfo_height()
@@ -1132,14 +1146,22 @@ class MyGui:
             item["image"].configure(size=(new_width, new_height))
         else:
             item["panel"].configure(width=new_width, height=new_height)
+            item["panel_clone"].configure(width=new_width, height=new_height)
 
         if right_side:
             item["panel"].place(
                 x=((item["x"]) + (new_width / 2)), y=(item["y"] + (new_height / 2))
             )
+            item["panel_clone"].place(
+                x=((item["x"]) + (new_width / 2)), y=(item["y"] + (new_height / 2))
+            )
             return
         elif item["resize_edge"] == "top":
             item["panel"].place(
+                x=(item["x"]) + (new_width / 2),
+                y=((item["y"] + item["start_height"]) - (new_height / 2)),
+            )
+            item["panel_clone"].place(
                 x=(item["x"]) + (new_width / 2),
                 y=((item["y"] + item["start_height"]) - (new_height / 2)),
             )
@@ -1149,15 +1171,27 @@ class MyGui:
                 x=((item["x"] + item["start_width"]) - (new_width / 2)),
                 y=(item["y"] + (new_height / 2)),
             )
+            item["panel_clone"].place(
+                x=((item["x"] + item["start_width"]) - (new_width / 2)),
+                y=(item["y"] + (new_height / 2)),
+            )
             return
         elif item["resize_edge"] == "top-right":
             item["panel"].place(
                 x=((item["x"]) + (new_width / 2)),
                 y=((item["y"] + item["start_height"]) - (new_height / 2)),
             )
+            item["panel_clone"].place(
+                x=((item["x"]) + (new_width / 2)),
+                y=((item["y"] + item["start_height"]) - (new_height / 2)),
+            )
             return
 
         item["panel"].place(
+            x=((item["x"] + item["start_width"]) - (new_width / 2)),
+            y=((item["y"] + item["start_height"]) - (new_height / 2)),
+        )
+        item["panel_clone"].place(
             x=((item["x"] + item["start_width"]) - (new_width / 2)),
             y=((item["y"] + item["start_height"]) - (new_height / 2)),
         )
@@ -1186,6 +1220,7 @@ class MyGui:
 
         # Move the draggable image
         item["panel"].place(x=new_x, y=new_y, anchor="center")
+        item["panel_clone"].place(x=new_x, y=new_y, anchor="center")
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
