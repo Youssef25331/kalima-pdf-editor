@@ -3,6 +3,7 @@ import CTkColorPicker
 from PIL import Image
 import pdf_editor
 from pathlib import Path
+import pywinstyles
 
 # Fix scalling issues on some devices.
 ct.deactivate_automatic_dpi_awareness()
@@ -14,7 +15,7 @@ class MyGui:
         self.root = root
         self.root.geometry("400x500")
         self.root.minsize(400, 500)
-        self.root.title("Kalima PDF Editor")
+        self.root.title("Kalima-PDF-Editor")
         self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
         self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
@@ -45,7 +46,7 @@ class MyGui:
         # Create a new window
         self.pdf_window = ct.CTk()
         self.pdf_window.geometry("700x600")
-        self.pdf_window.title("Editor")
+        self.pdf_window.title("PDF Editor")
         self.pdf_window.minsize(600, 200)
         self.exclusion_list = []
         self.is_include = False
@@ -263,6 +264,8 @@ class MyGui:
             font=(self.global_font_family, 16),
             command=self.convert_pdf,
         )
+
+        # Configure rows.
 
         # Configure columns to be equal width.
         self.top_frame.columnconfigure((0, 1, 2, 3), weight=1, uniform="column")
@@ -644,6 +647,9 @@ class MyGui:
     def opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["opacity"] = round(value, 1)
+        pywinstyles.set_opacity(
+            item["panel"], value=item["opacity"] * item["bg_opacity"]
+        )
         self.opacity_entry.delete(0, "end")
         self.opacity_entry.insert(0, str(item["opacity"]))
 
@@ -656,6 +662,9 @@ class MyGui:
                 self.opacity_entry.delete(0, "end")
                 self.opacity_entry.insert(0, str(item["opacity"]))
                 self.opacity_slider.set(value)
+                pywinstyles.set_opacity(
+                    item["panel"], value=item["opacity"] * item["bg_opacity"]
+                )
             else:
                 self.show_popup_window(
                     self.pdf_window,
@@ -679,6 +688,8 @@ class MyGui:
 
     def background_opacity_picker(self, value):
         item = self.editing_items[self.current_item]
+        panel_clone = item["panel"]
+        panel_clone.place(x=0,y=0)
         item["bg_opacity"] = round(value, 1)
         self.background_opacity_entry.delete(0, "end")
         self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
@@ -907,8 +918,6 @@ class MyGui:
             "start_height": 0,
             "relative_x": 0,
             "relative_y": 0,
-            "frame_x": 0,
-            "frame_y": 0,
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#FFFFFF",
@@ -955,8 +964,6 @@ class MyGui:
             "start_height": 0,
             "relative_x": 0,
             "relative_y": 0,
-            "frame_x": 0,
-            "frame_y": 0,
             "width_percent": 0,
             "height_percent": 0,
             "bg_color": "#000000",
@@ -1004,12 +1011,6 @@ class MyGui:
             font_height_px = item["font_size"]
             font_percentage = font_height_px / self.rendered_pdf_height
             item["relative_font_size"] = font_percentage
-        return (
-            item_position_x / self.image_frame.winfo_width()
-            + ((item_width / self.image_frame.winfo_width()) / 2),
-            item_position_y / self.image_frame.winfo_height()
-            + ((item_height / self.image_frame.winfo_height()) / 2),
-        )
 
     def start_action(self, event, item):
         self.current_item = item["index"]
@@ -1064,7 +1065,6 @@ class MyGui:
             self.do_drag(event, item)
 
     def do_resize(self, event, item):
-        item["panel"].place(relx=0, rely=0)
         new_width = item["panel"].winfo_width()
         new_height = item["panel"].winfo_height()
         right_side = False
@@ -1163,17 +1163,10 @@ class MyGui:
         )
 
     def stop_action(self, event, item):
-        location = self.calulate_relative_dimensions(item)
-        item["panel"].place(
-            x=0,
-            y=0,
-            relx=location[0],
-            rely=location[1],
-        )
+        self.calulate_relative_dimensions(item)
         self.image_frame.configure(cursor="")
 
     def do_drag(self, event, item):
-        item["panel"].place(rely=0, relx=0)
         image_position_x = item["panel"].winfo_x()
         image_position_y = item["panel"].winfo_y()
         drag_width = item["panel"].winfo_width()
