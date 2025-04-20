@@ -623,6 +623,7 @@ class MyGui:
         if "text" in item:
             item["text"] = input_text
             item["panel"].configure(text=input_text)
+            item["panel_clone"].configure(text=input_text)
 
     def bg_color_picker(self):
         pick_color = CTkColorPicker.AskColor(
@@ -650,6 +651,11 @@ class MyGui:
         pywinstyles.set_opacity(
             item["panel"], value=item["opacity"] * item["bg_opacity"]
         )
+        pywinstyles.set_opacity(
+            item["panel_clone"],
+            color="black",
+            value=item["opacity"] * item["bg_opacity"],
+        )
         self.opacity_entry.delete(0, "end")
         self.opacity_entry.insert(0, str(item["opacity"]))
 
@@ -664,6 +670,11 @@ class MyGui:
                 self.opacity_slider.set(value)
                 pywinstyles.set_opacity(
                     item["panel"], value=item["opacity"] * item["bg_opacity"]
+                )
+                pywinstyles.set_opacity(
+                    item["panel_clone"],
+                    color="black",
+                    value=item["opacity"] * item["bg_opacity"],
                 )
             else:
                 self.show_popup_window(
@@ -688,9 +699,10 @@ class MyGui:
 
     def background_opacity_picker(self, value):
         item = self.editing_items[self.current_item]
-        panel_clone = item["panel"]
-        panel_clone.place(x=0, y=0)
         item["bg_opacity"] = round(value, 1)
+        pywinstyles.set_opacity(
+            item["panel"], value=item["opacity"] * item["bg_opacity"]
+        )
         self.background_opacity_entry.delete(0, "end")
         self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
 
@@ -703,6 +715,9 @@ class MyGui:
                 self.background_opacity_entry.delete(0, "end")
                 self.background_opacity_entry.insert(0, str(item["opacity"]))
                 self.background_opacity_slider.set(value)
+                pywinstyles.set_opacity(
+                    item["panel"], value=item["opacity"] * item["bg_opacity"]
+                )
             else:
                 self.show_popup_window(
                     self.pdf_window,
@@ -728,12 +743,14 @@ class MyGui:
         item = self.editing_items[self.current_item]
         if "text" in item:
             item["panel"].configure(font=(font, item["font_size"]))
+            item["panel_clone"].configure(font=(font, item["font_size"]))
             item["font_family"] = font
 
     def font_size_picker(self, value):
         item = self.editing_items[self.current_item]
         if "text" in item:
             item["panel"].configure(font=(item["font_family"], value))
+            item["panel_clone"].configure(font=(item["font_family"], value))
             item["font_size"] = round(value)
             self.font_size_label.configure(text="Font Size: " + str(item["font_size"]))
 
@@ -755,6 +772,7 @@ class MyGui:
         if color and "text" in item:
             self.text_color_button.configure(fg_color=color)
             item["panel"].configure(text_color=color)
+            item["panel_clone"].configure(text_color=color)
             item["text_color"] = color
 
     def set_background(self, image_location="Temp/Temp"):
