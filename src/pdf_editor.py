@@ -1,6 +1,8 @@
 import math, os, sys
 from pypdf import PdfReader, PdfWriter
+from pypdf.constants import UserAccessPermissions
 import pymupdf
+import cryptography
 from PIL import Image
 from fpdf import FPDF
 from fontTools.ttLib import TTFont
@@ -239,7 +241,10 @@ def convert_pdf_page(pdf_path, page_number, output, alpha=True):
 
 
 def convert_pdf_to_image_pdf(
-    input_pdf_path="./output.pdf", output_pdf_path="./THE_output.pdf", dpi=300
+    input_pdf_path="./output.pdf",
+    output_pdf_path="./THE_output.pdf",
+    dpi=300,
+    owner_pw=None,
 ):
     pdf_doc = pymupdf.open(input_pdf_path)
     img_pdf = pymupdf.open()
@@ -251,9 +256,32 @@ def convert_pdf_to_image_pdf(
         new_page = img_pdf.new_page(width=page.rect.width, height=page.rect.height)
         new_page.insert_image(new_page.rect, stream=pix.tobytes("png"))
 
+    perm = (
+        pymupdf.PDF_PERM_ACCESSIBILITY
+        | pymupdf.PDF_PERM_PRINT
+        | pymupdf.PDF_PERM_COPY  # permit copying
+        | pymupdf.PDF_PERM_ANNOTATE  # permit adding annotations
+    )
+
     # Save the new PDF
-    img_pdf.save(output_pdf_path, garbage=4, deflate=True)
-    # Close both PDFs
+    if owner_pw:
+        img_pdf.save(
+            output_pdf_path,
+            garbage=4,
+            deflate=True,
+            owner_pw=owner_pw,
+            permissions=0,
+            encryption=pymupdf.PDF_ENCRYPT_AES_256,
+        )
+    else:
+        img_pdf.save(
+            output_pdf_path,
+            garbage=4,
+            deflate=True,
+        )
+
+    print(perm)
+
     pdf_doc.close()
     img_pdf.close()
 
@@ -308,6 +336,7 @@ def merge_pdfs(
     overlay_pdf_path=temp_pdf,
     base_pdf_path=temp_loop_pdf,
     invert=False,
+    owner_pw=None,
 ):
     # Merge an overlay PDF onto a base PDF at a specified location, excluding certain pages.
     exclude_pages = exclude_pages or []
@@ -347,7 +376,7 @@ def merge_pdfs(
         with open(temp_loop_pdf, "wb") as out:
             writer.write(out)
         if is_final:
-            convert_pdf_to_image_pdf(temp_loop_pdf, output_path)
+            convert_pdf_to_image_pdf(temp_loop_pdf, output_path, owner_pw=owner_pw)
     except FileNotFoundError:
         raise ValueError(f"PDF file not found: {base_pdf_path} or {overlay_pdf_path}")
     except Exception as e:

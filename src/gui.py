@@ -805,6 +805,17 @@ class MyGui:
             filetypes=[("PDF Files", "*.pdf")],
             initialfile="output.pdf",
         )
+        hi = self.show_popup_window(
+            self.pdf_window,
+            "Uknown Error!",
+            "Encrypt",
+            self.success,
+            "Would you like to encrypt the PDF? (Keep the field empty to leave it unencrypted)",
+            self.text_color,
+        )
+        self.pdf_window.wait_window(hi)
+        print("closed")
+
         if not save_path:
             return
 
@@ -1100,7 +1111,6 @@ class MyGui:
         new_width = item["panel"].winfo_width()
         new_height = item["panel"].winfo_height()
         right_side = False
-        print(item["resize_edge"])
         if item["resize_edge"] == "bottom":
             right_side = True
             dy = event.y - item["panel"].winfo_height()
@@ -1315,15 +1325,44 @@ class MyGui:
             text_color=text_color,
             font=(self.global_font_family, 18, self.global_font_style),
         )
+
+        password = ct.CTkEntry(
+            popup,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            text_color=self.text_color,
+            placeholder_text="Type the encryption password",
+            width=200,
+            border_width=0,
+            fg_color=self.second_dark,
+        )
+
+        button = ct.CTkButton(
+            popup,
+            text="Encrypt",
+            height=50,
+            fg_color="#111f28",
+            hover_color="#213c4e",
+            text_color="#e3cdb3",
+            font=("Figtree", 12, "bold"),
+        )
+
         # popup.overrideredirect(True)
         popup_label.pack(pady=label_pading)
         popup_text.pack(pady=text_pading)
+        popup_text.pack(pady=text_pading)
+        password.pack(pady=0)
+        button.pack(pady=20)
         popup.after(
             200,
             lambda: popup.iconbitmap(
                 pdf_editor.get_base_path() / "assets" / "logo.ico"
             ),
         )
+        return popup
 
     def set_mouse_pos(self, event):
         self.mouse_frame_position_x = (
