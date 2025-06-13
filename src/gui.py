@@ -529,6 +529,8 @@ class MyGui:
         if self.current_item >= 0:
             item = self.editing_items[self.current_item]
             item["panel"].destroy()
+            if "text" in item:
+                item["panel_clone"].destroy()
             self.editing_items[self.current_item] = {
                 "index": item["index"],
                 "deleted": True,
