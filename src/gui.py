@@ -55,6 +55,7 @@ class MyGui:
         self.pdf_window.bind("<Delete>", self.delete_item)
         self.mouse_frame_position_x = 0
         self.mouse_frame_position_y = 0
+        self.encryption_key = ""
 
         self.pdf_window.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
 
@@ -805,7 +806,11 @@ class MyGui:
             filetypes=[("PDF Files", "*.pdf")],
             initialfile="output.pdf",
         )
-        hi = self.show_popup_window(
+
+        if not save_path:
+            return
+
+        encrypt_popup = self.show_encrypt_window(
             self.pdf_window,
             "Uknown Error!",
             "Encrypt",
@@ -813,11 +818,7 @@ class MyGui:
             "Would you like to encrypt the PDF? (Keep the field empty to leave it unencrypted)",
             self.text_color,
         )
-        self.pdf_window.wait_window(hi)
-        print("closed")
-
-        if not save_path:
-            return
+        self.pdf_window.wait_window(encrypt_popup)
 
         pdf_editor.setup_loop_file(self.pdf)
         deleted = 0
@@ -866,6 +867,7 @@ class MyGui:
                         item_translations[1],
                         self.exclusion_list,
                         invert=self.is_include,
+                        owner_pw=self.encryption_key,
                     )
                 else:
                     deleted += 1
@@ -911,6 +913,7 @@ class MyGui:
             self.text_color,
             20,
         )
+        self.encryption_key = ""
 
     def add_image(self):
         loaded_logo = ct.filedialog.askopenfilename(
@@ -1326,6 +1329,64 @@ class MyGui:
             font=(self.global_font_family, 18, self.global_font_style),
         )
 
+        # popup.overrideredirect(True)
+        popup_label.pack(pady=label_pading)
+        popup_text.pack(pady=text_pading)
+
+        popup.after(
+            200,
+            lambda: popup.iconbitmap(
+                pdf_editor.get_base_path() / "assets" / "logo.ico"
+            ),
+        )
+        return popup
+
+    def show_encrypt_window(
+        self,
+        parent,
+        title,
+        header_message,
+        header_color,
+        text_message,
+        text_color,
+        label_pading=20,
+        text_pading=0,
+    ):
+        popup = ct.CTkToplevel(parent, fg_color=self.dark)
+        popup_width = 600
+        popup_height = 250
+        popup.title(title)
+        popup.grab_set()
+        popup.configure()
+        popup.minsize(popup_width, popup_height)
+        popup.maxsize(popup_width, popup_height)
+        popup.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
+
+        parent_x = parent.winfo_x()
+        parent_y = parent.winfo_y()
+        parent_width = parent.winfo_width()
+        parent_height = parent.winfo_height()
+
+        pos_x = parent_x + (parent_width // 2) - (popup_width // 2)
+        pos_y = parent_y + (parent_height // 2) - (popup_height // 2)
+
+        popup.geometry(f"{popup_width}x{popup_height}+{pos_x}+{pos_y}")
+
+        popup_label = ct.CTkLabel(
+            popup,
+            text=header_message,
+            wraplength=250,
+            text_color=header_color,
+            font=(self.global_font_family, 32, self.global_font_style),
+        )
+        popup_text = ct.CTkLabel(
+            popup,
+            text=text_message,
+            wraplength=300,
+            text_color=text_color,
+            font=(self.global_font_family, 18, self.global_font_style),
+        )
+
         password = ct.CTkEntry(
             popup,
             font=(
@@ -1347,15 +1408,19 @@ class MyGui:
             fg_color="#111f28",
             hover_color="#213c4e",
             text_color="#e3cdb3",
+            command=lambda: self.set_encryption(popup, password.get()),
             font=("Figtree", 12, "bold"),
         )
 
         # popup.overrideredirect(True)
         popup_label.pack(pady=label_pading)
         popup_text.pack(pady=text_pading)
-        popup_text.pack(pady=text_pading)
         password.pack(pady=0)
         button.pack(pady=20)
+        popup.protocol(
+            "WM_DELETE_WINDOW", lambda: self.set_encryption(popup, password.get())
+        )
+
         popup.after(
             200,
             lambda: popup.iconbitmap(
@@ -1363,6 +1428,10 @@ class MyGui:
             ),
         )
         return popup
+
+    def set_encryption(self, root: ct.CTkToplevel, message):
+        self.encryption_key = message
+        root.destroy()
 
     def set_mouse_pos(self, event):
         self.mouse_frame_position_x = (

@@ -264,7 +264,7 @@ def convert_pdf_to_image_pdf(
     )
 
     # Save the new PDF
-    if owner_pw:
+    if owner_pw != "":
         img_pdf.save(
             output_pdf_path,
             garbage=4,
