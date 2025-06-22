@@ -1,4 +1,5 @@
 import math, os, sys
+import io
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import UserAccessPermissions
 import pymupdf
@@ -243,7 +244,8 @@ def convert_pdf_page(pdf_path, page_number, output, alpha=True):
 def convert_pdf_to_image_pdf(
     input_pdf_path="./output.pdf",
     output_pdf_path="./THE_output.pdf",
-    dpi=300,
+    dpi=150,  # Reduced DPI for smaller file size
+    quality=75,  # JPEG quality (0-100, lower means smaller size)
     owner_pw=None,
 ):
     pdf_doc = pymupdf.open(input_pdf_path)
@@ -251,13 +253,19 @@ def convert_pdf_to_image_pdf(
 
     for page_num in range(pdf_doc.page_count):
         page = pdf_doc[page_num]
-        pix = page.get_pixmap(matrix=pymupdf.Matrix(200 / 72, 200 / 72), alpha=False)
+        # Lower DPI to reduce resolution
+        pix = page.get_pixmap(matrix=pymupdf.Matrix(dpi / 72, dpi / 72), alpha=False)
+
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format="JPEG", quality=quality)
 
         new_page = img_pdf.new_page(width=page.rect.width, height=page.rect.height)
-        new_page.insert_image(new_page.rect, stream=pix.tobytes("png"))
+        new_page.insert_image(new_page.rect, stream=img_buffer.getvalue())
 
     # Save the new PDF
-    if owner_pw != "":
+    if owner_pw:
         img_pdf.save(
             output_pdf_path,
             garbage=4,
@@ -365,8 +373,11 @@ def merge_pdfs(
 
         with open(temp_loop_pdf, "wb") as out:
             writer.write(out)
-        if is_final:
+        if is_final and True:
             convert_pdf_to_image_pdf(temp_loop_pdf, output_path, owner_pw=owner_pw)
+        elif is_final and False:
+            writer.write(output_path)
+
     except FileNotFoundError:
         raise ValueError(f"PDF file not found: {base_pdf_path} or {overlay_pdf_path}")
     except Exception as e:
