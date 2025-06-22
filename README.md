@@ -18,15 +18,14 @@ To run this project, ensure you have the following dependencies installed:
 - `CTkColorPicker` - For a custom color picker
 - `arabic_reshaper` and `bidi` For Arabic suppport
 - `fontTools` For fonts import.
+- `pymupdf` PDF to Image converter (replacment for poppler).
+- `pywinstyles` Used to show transparency in GUI (windows only).
+- `cryptography` To support encrypting the PDF after conversion.
 
 Install these packages using `pip`. For example:
 ```bash
 pip install pypdf pdf2image fpdf Pillow customtkinter CTkColorPicker python-bidi arabic-reshaper fonttools pymupdf pywinstyles cryptography
 ```
-### External Dependency
-- **Poppler**: Required for PDF-to-image conversion  
-  Download [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows) (or the appropriate version for your OS) and place the `bin` folder in the project's root directory.
-
 ---
 ## Usage
 1. Launch the app with `python GUI.py`.
@@ -34,4 +33,10 @@ pip install pypdf pdf2image fpdf Pillow customtkinter CTkColorPicker python-bidi
 3. Make the desired changed from the sidebar.
 4. Click convert and and select location. 
 5. Ouput will appear in the selected locatoin.
-
+---
+## Build
+The EXE is made using `pyinstaller`. Simply run this command and the EXE will be in the "dist" folder:
+```bash
+pyinstaller .\gui.spec
+```
+The ".\gui.spec" contains the settings necessery to make the application function properly.
