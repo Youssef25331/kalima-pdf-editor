@@ -256,13 +256,6 @@ def convert_pdf_to_image_pdf(
         new_page = img_pdf.new_page(width=page.rect.width, height=page.rect.height)
         new_page.insert_image(new_page.rect, stream=pix.tobytes("png"))
 
-    perm = (
-        pymupdf.PDF_PERM_ACCESSIBILITY
-        | pymupdf.PDF_PERM_PRINT
-        | pymupdf.PDF_PERM_COPY  # permit copying
-        | pymupdf.PDF_PERM_ANNOTATE  # permit adding annotations
-    )
-
     # Save the new PDF
     if owner_pw != "":
         img_pdf.save(
@@ -280,8 +273,6 @@ def convert_pdf_to_image_pdf(
             deflate=True,
         )
 
-    print(perm)
-
     pdf_doc.close()
     img_pdf.close()
 
@@ -291,7 +282,6 @@ def percentage_converter(
     pdf_path, dimensions, location, font_percetage=None, edit_page=1
 ):
     edit_page -= 1
-    print(edit_page)
     pdf = PdfReader(pdf_path)
 
     if pdf.pages[edit_page].rotation % 180 == 90:

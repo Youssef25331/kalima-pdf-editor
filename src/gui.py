@@ -896,16 +896,21 @@ class MyGui:
                 print("Unkown error!")
                 return
         if deleted == len(self.editing_items):
-            self.show_popup_window(
-                self.pdf_window,
-                "Error",
-                "Error!",
-                self.fail,
-                "There are no active edits!",
-                self.text_color,
-                20,
+            # self.show_popup_window(
+            #     self.pdf_window,
+            #     "Error",
+            #     "Error!",
+            #     self.fail,
+            #     "There are no active edits!",
+            #     self.text_color,
+            #     20,
+            # )
+            # return
+
+            pdf_editor.convert_pdf_to_image_pdf(
+                self.pdf, save_path, owner_pw=self.encryption_key
             )
-            return
+
         self.show_popup_window(
             self.pdf_window,
             "Success",
