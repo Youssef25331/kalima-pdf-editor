@@ -45,6 +45,12 @@ class MyGui:
     def open_pdf_window(self):
         # Create a new window
         self.pdf_window = ct.CTk()
+
+        # To show popup confirming exit
+        self.pdf_window.protocol(
+            "WM_DELETE_WINDOW", lambda: self.confirm_exit(self.pdf_window)
+        )
+
         self.pdf_window.geometry("700x600")
         self.pdf_window.title("PDF Editor")
         self.pdf_window.minsize(600, 200)
@@ -309,7 +315,7 @@ class MyGui:
         self.pdf_window.mainloop()
 
     def setup_images_buttons(self):
-        return
+        print("Close button clicked, but exit is disabled.")
 
     def setup_text_buttons(self):
         self.background_opacity_slider = ct.CTkSlider(
@@ -1439,6 +1445,41 @@ class MyGui:
     def set_encryption(self, root: ct.CTkToplevel, message):
         self.encryption_key = message
         root.destroy()
+
+    def confirm_exit(self, root: ct.CTk):
+        popup = self.show_popup_window(
+            self.pdf_window,
+            "Confirm",
+            "Warning!",
+            self.fail,
+            "Are you sure you want to exit?",
+            self.text_color,
+        )
+        buttons_frame = ct.CTkFrame(popup, fg_color=self.dark, width=600)
+        buttons_frame.pack(pady=20)
+
+        confirm_button = ct.CTkButton(
+            buttons_frame,
+            text="Exit",
+            height=50,
+            fg_color="#111f28",
+            hover_color="#213c4e",
+            text_color="#e3cdb3",
+            command=lambda: self.pdf_window.destroy(),
+            font=("Figtree", 12, "bold"),
+        )
+        cancel_button = ct.CTkButton(
+            buttons_frame,
+            text="Cancel",
+            height=50,
+            fg_color=self.success,
+            hover_color=self.success_hover,
+            text_color="#e3cdb3",
+            command=lambda: popup.destroy(),
+            font=("Figtree", 12, "bold"),
+        )
+        confirm_button.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=16)
+        cancel_button.grid(row=0, column=2, columnspan=2, sticky="ew", padx=5, pady=16)
 
     def set_mouse_pos(self, event):
         self.mouse_frame_position_x = (
