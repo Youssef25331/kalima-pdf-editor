@@ -652,6 +652,8 @@ class MyGui:
             item = self.editing_items[self.current_item]
             self.bg_color_button.configure(fg_color=color)
             item["panel"].configure(fg_color=color)
+            item["panel_clone"].configure(fg_color=color)
+            pywinstyles.set_opacity(item["panel_clone"], color=color)
             item["bg_color"] = color
 
     def opacity_picker(self, value):
@@ -1004,7 +1006,7 @@ class MyGui:
         )
         drag_panel.place(x=0, y=0)
         drag_panel_clone.place(x=0, y=0)
-        pywinstyles.set_opacity(drag_panel_clone, color="black")
+        pywinstyles.set_opacity(drag_panel_clone, color="#000000")
         item = {
             "index": len(self.editing_items),
             "type": "text",
