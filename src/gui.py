@@ -631,6 +631,7 @@ class MyGui:
         item = self.editing_items[self.current_item]
         if "text" in item:
             item["text"] = input_text
+            item["panel"].configure(text=input_text)
             item["panel_clone"].configure(text=input_text)
 
     def bg_color_picker(self):
