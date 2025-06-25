@@ -1,4 +1,4 @@
-import math, os, sys
+import shutil, os, sys
 import io
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import UserAccessPermissions
@@ -75,6 +75,13 @@ def generate_modified_fonts():
         )
         if not font_file.exists():
             font.save(font_file)
+
+
+def cleanup_folders():
+    if (font_dir / "Modified").exists():
+        shutil.rmtree(font_dir / "Modified")
+    if (get_exe_dir() / "Temp").exists():
+        shutil.rmtree(get_exe_dir() / "Temp").rmdir()
 
 
 # For importing fonts into FPDF

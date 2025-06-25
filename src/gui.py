@@ -1468,7 +1468,7 @@ class MyGui:
             fg_color="#111f28",
             hover_color="#213c4e",
             text_color="#e3cdb3",
-            command=lambda: self.pdf_window.destroy(),
+            command=lambda: self.exit_app(),
             font=("Figtree", 12, "bold"),
         )
         cancel_button = ct.CTkButton(
@@ -1483,6 +1483,10 @@ class MyGui:
         )
         confirm_button.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=16)
         cancel_button.grid(row=0, column=2, columnspan=2, sticky="ew", padx=5, pady=16)
+
+    def exit_app(self):
+        self.pdf_window.destroy()
+        pdf_editor.cleanup_folders()
 
     def set_mouse_pos(self, event):
         self.mouse_frame_position_x = (
