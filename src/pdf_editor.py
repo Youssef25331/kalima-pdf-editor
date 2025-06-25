@@ -1,4 +1,4 @@
-import shutil, os, sys
+import shutil, math, os, sys
 import io
 from pypdf import PdfReader, PdfWriter
 from pypdf.constants import UserAccessPermissions
