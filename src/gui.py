@@ -60,6 +60,7 @@ class MyGui:
             self.menubar,
         )
         self.menubar.add_cascade(label="File", menu=self.file_menu)
+        self.file_menu.add_cascade(label="Export page png", command=self.export_image)
 
         self.pdf_window.geometry("700x600")
         self.pdf_window.title("PDF Editor")
@@ -1505,6 +1506,30 @@ class MyGui:
         self.mouse_frame_position_y = (
             self.image_frame.winfo_rooty() - event.y_root
         ) * -1
+
+    def export_image(self):
+        save_path = ct.filedialog.asksaveasfilename(
+            initialdir=Path.cwd(),
+            defaultextension=".png",
+            filetypes=[("PNG Files", "*.png")],
+            initialfile="Untitled.png",
+        )
+
+        if not save_path:
+            return
+        pdf_editor.convert_pdf_page(
+            self.pdf, self.current_page_number, save_path, alpha=False
+        )
+
+        self.show_popup_window(
+            self.pdf_window,
+            "Success",
+            "Success!",
+            self.success,
+            "The current page was successfully exported.",
+            self.text_color,
+            20,
+        )
 
 
 root = ct.CTk()
