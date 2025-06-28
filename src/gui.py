@@ -988,6 +988,7 @@ class MyGui:
             "height_percent": 0,
             "bg_color": "#FFFFFF",
             "opacity": 1,
+            "bg_enabled": True,
         }
 
         drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))
