@@ -1,4 +1,5 @@
 import customtkinter as ct
+from customtkinter.windows.ctk_tk import tkinter
 import CTkColorPicker
 from PIL import Image
 import pdf_editor
@@ -11,13 +12,13 @@ ct.set_appearance_mode("dark")
 
 
 class MyGui:
-    def __init__(self, root):
+    def __init__(self, root: ct.CTk):
         self.root = root
         self.root.geometry("400x500")
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
         self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
-        # self.browse_pdf()
+        self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
@@ -32,15 +33,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        self.pdf = ct.filedialog.askopenfilename(
-            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        )
-        if self.pdf:
-            self.root.destroy()  # Close the original window
-            self.open_pdf_window()
-        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        # self.root.destroy()
-        # self.open_pdf_window()
+        # self.pdf = ct.filedialog.askopenfilename(
+        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        # )
+        # if self.pdf:
+        #     self.root.destroy()  # Close the original window
+        #     self.open_pdf_window()
+        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        self.root.destroy()
+        self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -50,6 +51,15 @@ class MyGui:
         self.pdf_window.protocol(
             "WM_DELETE_WINDOW", lambda: self.confirm_exit(self.pdf_window)
         )
+
+        ## Menu bar for special options
+        self.menubar = tkinter.Menu(self.pdf_window)
+        self.pdf_window.config(menu=self.menubar)
+
+        self.file_menu = tkinter.Menu(
+            self.menubar,
+        )
+        self.menubar.add_cascade(label="File", menu=self.file_menu)
 
         self.pdf_window.geometry("700x600")
         self.pdf_window.title("PDF Editor")
