@@ -60,7 +60,7 @@ class MyGui:
             self.menubar,
         )
         self.menubar.add_cascade(label="File", menu=self.file_menu)
-        self.file_menu.add_cascade(label="Export page png", command=self.export_image)
+        self.file_menu.add_cascade(label="Export PNG", command=self.export_image)
 
         self.pdf_window.geometry("700x600")
         self.pdf_window.title("PDF Editor")
@@ -663,21 +663,27 @@ class MyGui:
             item = self.editing_items[self.current_item]
             self.bg_color_button.configure(fg_color=color)
             item["panel"].configure(fg_color=color)
-            item["panel_clone"].configure(fg_color=color)
-            pywinstyles.set_opacity(item["panel_clone"], color=color)
+            if "text" in item:
+                item["panel_clone"].configure(fg_color=color)
+                pywinstyles.set_opacity(item["panel_clone"], color=color)
             item["bg_color"] = color
 
     def opacity_picker(self, value):
         item = self.editing_items[self.current_item]
         item["opacity"] = round(value, 1)
-        pywinstyles.set_opacity(
-            item["panel"], value=item["opacity"] * item["bg_opacity"]
-        )
-        pywinstyles.set_opacity(
-            item["panel_clone"],
-            color="black",
-            value=item["opacity"],
-        )
+        if "text" in item:
+            pywinstyles.set_opacity(
+                item["panel"], value=item["opacity"] * item["bg_opacity"]
+            )
+
+            pywinstyles.set_opacity(
+                item["panel_clone"],
+                color="black",
+                value=item["opacity"],
+            )
+        else:
+            pywinstyles.set_opacity(item["panel"], value=item["opacity"])
+
         self.opacity_entry.delete(0, "end")
         self.opacity_entry.insert(0, str(item["opacity"]))
 
@@ -723,7 +729,7 @@ class MyGui:
         item = self.editing_items[self.current_item]
         item["bg_opacity"] = round(value, 1)
         pywinstyles.set_opacity(
-            item["panel"], value=item["opacity"] * item["bg_opacity"]
+            item["panel"], value=item["opacity"] * (item["bg_opacity"] or 1)
         )
         self.background_opacity_entry.delete(0, "end")
         self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
@@ -738,7 +744,7 @@ class MyGui:
                 self.background_opacity_entry.insert(0, str(item["opacity"]))
                 self.background_opacity_slider.set(value)
                 pywinstyles.set_opacity(
-                    item["panel"], value=item["opacity"] * item["bg_opacity"]
+                    item["panel"], value=item["opacity"] * (item["bg_opacity"] or 1)
                 )
             else:
                 self.show_popup_window(
@@ -1279,7 +1285,8 @@ class MyGui:
 
         # Move the draggable image
         item["panel"].place(x=new_x, y=new_y, anchor="center")
-        item["panel_clone"].place(x=new_x, y=new_y, anchor="center")
+        if "text" in item:
+            item["panel_clone"].place(x=new_x, y=new_y, anchor="center")
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
