@@ -159,7 +159,6 @@ class MyGui:
         )
         self.opacity_entry.bind("<Return>", self.set_opacity)
         self.setup_text_buttons()
-        self.setup_images_buttons()
 
         # setup icons
         self.left_arrow = ct.CTkImage(
@@ -325,9 +324,6 @@ class MyGui:
         # Optional: Disable the main window while the new one is open
         self.pdf_window.mainloop()
 
-    def setup_images_buttons(self):
-        print("Close button clicked, but exit is disabled.")
-
     def setup_text_buttons(self):
         self.background_opacity_slider = ct.CTkSlider(
             master=self.top_frame,
@@ -427,6 +423,17 @@ class MyGui:
         )
         self.text_entry.bind("<Return>", self.set_text)
 
+        self.enable_background = ct.CTkCheckBox(
+            self.top_frame,
+            border_color="#565b5e",
+            fg_color=self.main,
+            border_width=1,
+            checkmark_color=self.text_color,
+            text="Disable Background",
+            width=0,
+            hover_color=self.second_dark_hover,
+        )
+
     def update_side_panel(self):
         if self.current_item != -1:
             item = self.editing_items[self.current_item]
@@ -435,6 +442,7 @@ class MyGui:
             )
             self.opacity_slider.set(item["opacity"])
             if "text" in item:
+                self.enable_background.grid_forget()
                 self.bg_color_button.configure(
                     width=100,
                     height=30,
@@ -508,6 +516,7 @@ class MyGui:
                 )
                 self.opacity_entry.delete(0, "end")
                 self.opacity_entry.insert(0, str(item["opacity"]))
+
                 self.bg_color_button.configure(width=215, height=36)
                 self.bg_color_button.grid(
                     row=1, column=0, columnspan=4, pady=10, padx=5
@@ -515,12 +524,14 @@ class MyGui:
                 self.background_opacity_entry.grid_forget()
                 self.background_opacity_slider.grid_forget()
                 self.opacity_label.grid(row=2, column=1, columnspan=2)
+
                 self.opacity_slider.configure(width=215)
                 self.opacity_slider.grid(
                     row=3,
                     column=1,
                     columnspan=2,
                 )
+                self.enable_background.grid(row=4, column=1, columnspan=2, pady=10)
                 self.background_opacity_label.grid_forget()
                 self.background_opacity_slider.grid_forget()
                 self.font_size_slider.grid_forget()
@@ -530,6 +541,7 @@ class MyGui:
                 self.text_entry.grid_forget()
         else:
             self.opacity_label.grid_forget()
+            self.enable_background.grid_forget()
             self.font_size_label.grid_forget()
             self.opacity_entry.grid_forget()
             self.background_opacity_entry.grid_forget()
