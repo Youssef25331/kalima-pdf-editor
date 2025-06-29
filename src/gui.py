@@ -432,6 +432,7 @@ class MyGui:
             text="Disable Background",
             width=0,
             hover_color=self.second_dark_hover,
+            command=self.background_switch,
         )
 
     def update_side_panel(self):
@@ -670,7 +671,7 @@ class MyGui:
                 pdf_editor.get_base_path() / "assets" / "logo.ico"
             ),
         )
-        color = pick_color.get()
+        color = str(pick_color.get())
         if color:
             item = self.editing_items[self.current_item]
             self.bg_color_button.configure(fg_color=color)
@@ -678,6 +679,12 @@ class MyGui:
             if "text" in item:
                 item["panel_clone"].configure(fg_color=color)
                 pywinstyles.set_opacity(item["panel_clone"], color=color)
+            else:
+                if not item["bg_enabled"]:
+                    pywinstyles.set_opacity(
+                        item["panel"], value=item["opacity"], color=color
+                    )
+
             item["bg_color"] = color
 
     def opacity_picker(self, value):
@@ -694,7 +701,12 @@ class MyGui:
                 value=item["opacity"],
             )
         else:
-            pywinstyles.set_opacity(item["panel"], value=item["opacity"])
+            if not item["bg_enabled"]:
+                pywinstyles.set_opacity(
+                    item["panel"], value=item["opacity"], color=item["bg_color"]
+                )
+            else:
+                pywinstyles.set_opacity(item["panel"], value=item["opacity"])
 
         self.opacity_entry.delete(0, "end")
         self.opacity_entry.insert(0, str(item["opacity"]))
@@ -1550,6 +1562,22 @@ class MyGui:
             self.text_color,
             20,
         )
+
+    def background_switch(self):
+        item = self.editing_items[self.current_item]
+
+        if item["bg_enabled"]:
+            pywinstyles.set_opacity(
+                item["panel"], value=item["opacity"], color=item["bg_color"]
+            )
+            item["bg_enabled"] = False
+
+        else:
+            pywinstyles.set_opacity(
+                item["panel"],
+                value=item["opacity"],
+            )
+            item["bg_enabled"] = True
 
 
 root = ct.CTk()
