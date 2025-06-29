@@ -893,6 +893,7 @@ class MyGui:
                             item_translations[0][0],
                             item_translations[0][1],
                             item["panel"]._fg_color,
+                            item["bg_enabled"],
                         )
                     else:
                         item_translations = pdf_editor.percentage_converter(

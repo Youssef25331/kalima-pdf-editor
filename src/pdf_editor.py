@@ -108,7 +108,13 @@ def load_project_fonts(generate=True):
 
 
 def resize_and_save_image(
-    input_path, opacity, width, height=None, bg_color=None, output_path=temp_pdf
+    input_path,
+    opacity,
+    width,
+    height=None,
+    bg_color=None,
+    bg_enabled=True,
+    output_path=temp_pdf,
 ):
     # Resize an image to a specified width and save it with an optional background color.
     try:
@@ -124,7 +130,7 @@ def resize_and_save_image(
         )
         img = img.resize(size, Image.Resampling.LANCZOS)  # Better quality resizing
 
-        if bg_color:
+        if bg_color and bg_enabled:
             bg_rgb = hex_to_rgb(bg_color)
             background = Image.new("RGBA", size, bg_rgb + (255,))  # Add alpha channel
             background.paste(img, (0, 0), mask=img)
