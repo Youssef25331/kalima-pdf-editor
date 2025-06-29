@@ -156,6 +156,7 @@ def create_text_pdf(
     font_size=None,
     output_path=temp_pdf,
     bg_opacity=1,
+    stroke_color="FFFFFF",
 ):
     # Create a PDF with text at specified dimensions, with optional text and background colors.
     pdf = FPDF("P", "pt", dimensions)
@@ -164,8 +165,9 @@ def create_text_pdf(
     pdf.add_page()
 
     text_rgb = hex_to_rgb(text_color)
+    stroke_rgb = hex_to_rgb(stroke_color)
     reshaped_text = arabic_reshaper.reshape(text)  # Connects letters
-    normalized_text = get_display(reshaped_text)
+    normalized_text = str(get_display(reshaped_text))
     pdf.set_text_color(*text_rgb)
     fonts = load_project_fonts(False)
     for font_name, font_path, _ in fonts:
@@ -183,14 +185,17 @@ def create_text_pdf(
         pdf.rect(
             0, 0, 9999, 9999, style="F"
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
-        pdf.cell(
-            dimensions[0],
-            dimensions[1],
-            txt=normalized_text,
-            align="C",
-            ln=0,
-            border=0,
-        )
+        pdf.set_draw_color(*stroke_rgb)
+
+        with pdf.local_context(text_mode="FILL_STROKE", line_width=2):
+            pdf.cell(
+                dimensions[0],
+                dimensions[1],
+                text=normalized_text,
+                align="C",
+                ln=0,
+                border=0,
+            )
         pdf.output(output_path)
 
     elif opacity == 0:
@@ -208,15 +213,19 @@ def create_text_pdf(
         text_pdf.set_auto_page_break(False)
         text_pdf.add_page()
         text_pdf.set_text_color(*text_rgb)
+
         text_pdf.set_font(font_family, size=int(math.floor(font_size)))
-        text_pdf.cell(
-            dimensions[0],
-            dimensions[1],
-            txt=normalized_text,
-            align="C",
-            ln=0,
-            border=0,
-        )
+        text_pdf.set_draw_color(*stroke_rgb)
+
+        with text_pdf.local_context(text_mode="FILL_STROKE", line_width=2):
+            text_pdf.cell(
+                dimensions[0],
+                dimensions[1],
+                text=normalized_text,
+                align="C",
+                ln=0,
+                border=0,
+            )
         text_pdf.output(output_path)
         convert_pdf_page(temp_pdf, 1, temp_text)
 

@@ -388,7 +388,27 @@ class MyGui:
             command=self.font_size_picker,
             width=215,
         )
+        self.stroke_width_slider = ct.CTkSlider(
+            master=self.top_frame,
+            button_corner_radius=4,
+            button_color=self.main_hover,
+            from_=0,
+            to=10,
+            command=self.stroke_width_picker,
+            width=215,
+        )
         self.font_size_label = ct.CTkLabel(
+            master=self.top_frame,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            text_color=self.text_color,
+            width=110,
+        )
+
+        self.stroke_width_label = ct.CTkLabel(
             master=self.top_frame,
             font=(
                 self.global_font_family,
@@ -507,9 +527,18 @@ class MyGui:
                 self.font_size_slider.set(item["font_size"])
                 self.font_size_slider.grid(row=6, column=1, columnspan=2, padx=5)
 
-                self.text_entry.grid(row=7, padx=5, pady=15, column=0, columnspan=4)
-                self.font_menu.grid(row=8, column=0, padx=5, pady=0, columnspan=4)
+                self.stroke_width_label.grid(row=7, column=1, columnspan=2, padx=5)
+                self.stroke_width_label.configure(
+                    text="Stroke Width: " + str(item["stroke_width"])
+                )
+                self.stroke_width_slider.set(item["stroke_width"])
+                self.stroke_width_slider.grid(row=8, column=1, columnspan=2, padx=5)
+
+                self.text_entry.grid(row=9, padx=5, pady=15, column=0, columnspan=4)
+                self.font_menu.grid(row=10, column=0, padx=5, pady=0, columnspan=4)
             else:
+                self.stroke_width_slider.grid_forget()
+                self.stroke_width_label.grid_forget()
                 self.opacity_slider.grid_forget()
                 self.opacity_slider.grid_forget()
                 self.opacity_entry.grid(
@@ -541,6 +570,8 @@ class MyGui:
                 self.text_color_button.grid_forget()
                 self.text_entry.grid_forget()
         else:
+            self.stroke_width_slider.grid_forget()
+            self.stroke_width_label.grid_forget()
             self.opacity_label.grid_forget()
             self.enable_background.grid_forget()
             self.font_size_label.grid_forget()
@@ -807,6 +838,14 @@ class MyGui:
             item["panel_clone"].configure(font=(item["font_family"], value))
             item["font_size"] = round(value)
             self.font_size_label.configure(text="Font Size: " + str(item["font_size"]))
+
+    def stroke_width_picker(self, value):
+        item = self.editing_items[self.current_item]
+        if "text" in item:
+            item["stroke_width"] = round(value)
+            self.stroke_width_label.configure(
+                text="Stroke Width: " + str(item["stroke_width"])
+            )
 
     def text_color_picker(self):
         pick_color = CTkColorPicker.AskColor(
@@ -1075,6 +1114,7 @@ class MyGui:
             "text_color": "#FFFFFF",
             "opacity": 1,
             "bg_opacity": 1,
+            "stroke_width": 0,
         }
         drag_panel.bind("<Button-1>", lambda event: self.start_action(event, item))
         drag_panel.bind("<B1-Motion>", lambda event: self.do_action(event, item))
