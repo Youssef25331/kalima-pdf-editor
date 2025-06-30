@@ -156,6 +156,7 @@ def create_text_pdf(
     font_size=None,
     output_path=temp_pdf,
     bg_opacity=1,
+    stroke_width=0,
     stroke_color="FFFFFF",
 ):
     # Create a PDF with text at specified dimensions, with optional text and background colors.
@@ -187,7 +188,7 @@ def create_text_pdf(
         )  # I don't remember why I set those to 9999 but im sure there was a good reason.
         pdf.set_draw_color(*stroke_rgb)
 
-        with pdf.local_context(text_mode="FILL_STROKE", line_width=2):
+        with pdf.local_context(text_mode="FILL_STROKE", line_width=stroke_width):
             pdf.cell(
                 dimensions[0],
                 dimensions[1],
@@ -217,7 +218,7 @@ def create_text_pdf(
         text_pdf.set_font(font_family, size=int(math.floor(font_size)))
         text_pdf.set_draw_color(*stroke_rgb)
 
-        with text_pdf.local_context(text_mode="FILL_STROKE", line_width=2):
+        with text_pdf.local_context(text_mode="FILL_STROKE", line_width=stroke_width):
             text_pdf.cell(
                 dimensions[0],
                 dimensions[1],
