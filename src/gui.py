@@ -1,3 +1,4 @@
+from typing import List
 import customtkinter as ct
 from customtkinter.windows.ctk_tk import tkinter
 import CTkColorPicker
@@ -18,7 +19,7 @@ class MyGui:
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
         self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
-        self.browse_pdf()
+        # self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
@@ -33,15 +34,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        # self.pdf = ct.filedialog.askopenfilename(
-        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        # )
-        # if self.pdf:
-        #     self.root.destroy()  # Close the original window
-        #     self.open_pdf_window()
-        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        self.root.destroy()
-        self.open_pdf_window()
+        self.pdf = ct.filedialog.askopenfilename(
+            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        )
+        if self.pdf:
+            self.root.destroy()  # Close the original window
+            self.open_pdf_window()
+        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        # self.root.destroy()
+        # self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -316,11 +317,12 @@ class MyGui:
 
         self.resize_id = None
         self.pdf_window.bind("<Configure>", self.debouce_update)
-
-        # Actions after initalization
+        self.pdf_window.bind(
+            "<Key>",
+            lambda event: self.entry_keybinding(event),
+        )
 
         self.set_background()
-
         # Optional: Disable the main window while the new one is open
         self.pdf_window.mainloop()
 
@@ -568,6 +570,7 @@ class MyGui:
                 self.text_entry.grid(row=10, padx=5, pady=15, column=0, columnspan=4)
                 self.font_menu.grid(row=11, column=0, padx=5, pady=0, columnspan=4)
             else:
+                self.stroke_color_button.grid_forget()
                 self.stroke_width_slider.grid_forget()
                 self.stroke_width_label.grid_forget()
                 self.opacity_slider.grid_forget()
@@ -603,6 +606,7 @@ class MyGui:
         else:
             self.push_to_front.grid_forget()
             self.stroke_width_slider.grid_forget()
+            self.stroke_color_button.grid_forget()
             self.stroke_width_label.grid_forget()
             self.opacity_label.grid_forget()
             self.enable_background.grid_forget()
@@ -676,6 +680,35 @@ class MyGui:
                 "Invalid input - use numbers like '1, 2, 3, 4'!",
                 self.text_color,
             )
+        # self.hide_excluded_items(values)
+
+    # def hide_excluded_items(self, values: List[int]):
+    #     for item in self.editing_items:
+    #         item["is_include"] = self.is_include
+    #         item["last_x"] = item["panel"].winfo_x() + item["panel"].winfo_width() / 2
+    #         item["last_y"] = item["panel"].winfo_y() + item["panel"].winfo_height() / 2
+    #         last_related = item["related_pages"]
+    #         if (
+    #             (
+    #                 self.current_page_number in item["related_pages"]
+    #                 and not item["is_include"]
+    #             )
+    #             or -1 in last_related
+    #             # or self.current_page_number not in item["related_pages"]
+    #             # and item["is_include"]
+    #         ):
+    #             print(item["related_pages"])
+    #             item["related_pages"] = values
+    #             item["panel"].place(x=item["last_x"], y=item["last_y"])
+    #             if "text" in item:
+    #                 item["panel_clone"].place(x=item["last_x"], y=item["last_y"])
+    #         else:
+    #             item["panel"].place_forget()
+    #             if "text" in item:
+    #                 item["panel_clone"].place_forget()
+
+    #     # for item in self.editing_items:
+    #     #   item["panel"].place_forget()
 
     def set_page(self, event):
         input_text = self.page_entry.get()
@@ -1089,6 +1122,7 @@ class MyGui:
         drag_panel.place(x=0, y=0)
         item = {
             "index": len(self.editing_items),
+            "related_pages": [-1],
             "image_location": loaded_logo,
             "image": overlay_image,
             "panel": drag_panel,
@@ -1145,6 +1179,8 @@ class MyGui:
         pywinstyles.set_opacity(drag_panel_clone, color="#000000")
         item = {
             "index": len(self.editing_items),
+            "related_pages": [-1],
+            "is_include": False,
             "type": "text",
             "text": "Your text",
             "panel": drag_panel,
@@ -1154,6 +1190,8 @@ class MyGui:
             "relative_font_size": 12,
             "x": 0,
             "y": 0,
+            "last_x": 0,
+            "last_y": 0,
             "is_resizing": False,
             "resize_edge": None,
             "start_x": 0,
@@ -1676,8 +1714,26 @@ class MyGui:
             item["bg_enabled"] = True
 
     def push_item_to_front(self):
-        item = self.editing_items(self.current_item)
-        print(item["panel"])
+        item = self.editing_items.pop(self.current_item)
+        for elements in self.editing_items:
+            if elements["index"] > item["index"]:
+                elements["index"] = elements["index"] - 1
+        item["index"] = len(self.editing_items)
+        self.editing_items.insert(item["index"], item)
+        self.current_item = item["index"]
+        self.update_side_panel()
+        item["panel"].lift()
+        if "text" in item:
+            item["panel_clone"].lift()
+
+    def entry_keybinding(self, event):
+        if str(event.widget).split(".")[-1] == "!entry" and event.state == 12:
+            if event.keycode == 86:
+                event.widget.event_generate("<<Paste>>")
+            if event.keycode == 65:
+                event.widget.event_generate("<<SelectAll>>")
+            if event.keycode == 67:
+                event.widget.event_generate("<<Copy>>")
 
 
 root = ct.CTk()
