@@ -1,3 +1,4 @@
+from typing import List
 import customtkinter as ct
 from customtkinter.windows.ctk_tk import tkinter
 import CTkColorPicker
@@ -323,7 +324,6 @@ class MyGui:
         self.set_background()
         # Optional: Disable the main window while the new one is open
         self.pdf_window.mainloop()
-
 
     def setup_text_buttons(self):
         self.background_opacity_slider = ct.CTkSlider(
@@ -679,6 +679,35 @@ class MyGui:
                 "Invalid input - use numbers like '1, 2, 3, 4'!",
                 self.text_color,
             )
+        # self.hide_excluded_items(values)
+
+    # def hide_excluded_items(self, values: List[int]):
+    #     for item in self.editing_items:
+    #         item["is_include"] = self.is_include
+    #         item["last_x"] = item["panel"].winfo_x() + item["panel"].winfo_width() / 2
+    #         item["last_y"] = item["panel"].winfo_y() + item["panel"].winfo_height() / 2
+    #         last_related = item["related_pages"]
+    #         if (
+    #             (
+    #                 self.current_page_number in item["related_pages"]
+    #                 and not item["is_include"]
+    #             )
+    #             or -1 in last_related
+    #             # or self.current_page_number not in item["related_pages"]
+    #             # and item["is_include"]
+    #         ):
+    #             print(item["related_pages"])
+    #             item["related_pages"] = values
+    #             item["panel"].place(x=item["last_x"], y=item["last_y"])
+    #             if "text" in item:
+    #                 item["panel_clone"].place(x=item["last_x"], y=item["last_y"])
+    #         else:
+    #             item["panel"].place_forget()
+    #             if "text" in item:
+    #                 item["panel_clone"].place_forget()
+
+    #     # for item in self.editing_items:
+    #     #   item["panel"].place_forget()
 
     def set_page(self, event):
         input_text = self.page_entry.get()
@@ -1093,6 +1122,7 @@ class MyGui:
         drag_panel.place(x=0, y=0)
         item = {
             "index": len(self.editing_items),
+            "related_pages": [-1],
             "image_location": loaded_logo,
             "image": overlay_image,
             "panel": drag_panel,
@@ -1149,6 +1179,8 @@ class MyGui:
         pywinstyles.set_opacity(drag_panel_clone, color="#000000")
         item = {
             "index": len(self.editing_items),
+            "related_pages": [-1],
+            "is_include": False,
             "type": "text",
             "text": "Your text",
             "panel": drag_panel,
@@ -1158,6 +1190,8 @@ class MyGui:
             "relative_font_size": 12,
             "x": 0,
             "y": 0,
+            "last_x": 0,
+            "last_y": 0,
             "is_resizing": False,
             "resize_edge": None,
             "start_x": 0,
@@ -1218,7 +1252,6 @@ class MyGui:
 
     def start_action(self, event, item):
         self.current_item = item["index"]
-        print(item["index"])
         self.update_side_panel()
 
         width = item["panel"].winfo_width()
@@ -1701,6 +1734,7 @@ class MyGui:
                 event.widget.event_generate("<<SelectAll>>")
             if event.keycode == 67:
                 event.widget.event_generate("<<Copy>>")
+
 
 root = ct.CTk()
 app = MyGui(root)
