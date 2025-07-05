@@ -943,6 +943,7 @@ class MyGui:
             self.set_background()
 
     def convert_pdf(self):
+        print(self.editing_items)
         save_path = ct.filedialog.asksaveasfilename(
             initialdir=Path.cwd(),
             defaultextension=".pdf",
@@ -1215,6 +1216,7 @@ class MyGui:
 
     def start_action(self, event, item):
         self.current_item = item["index"]
+        print(item["index"])
         self.update_side_panel()
 
         width = item["panel"].winfo_width()
@@ -1677,11 +1679,17 @@ class MyGui:
             item["bg_enabled"] = True
 
     def push_item_to_front(self):
-        item = self.editing_items[self.current_item]
+        item = self.editing_items.pop(self.current_item)
+        for elements in self.editing_items:
+            if elements["index"] > item["index"]:
+                elements["index"] = elements["index"] - 1
+        item["index"] = len(self.editing_items)
+        self.editing_items.insert(item["index"], item)
+        self.current_item = item["index"]
+        self.update_side_panel()
         item["panel"].lift()
         if "text" in item:
             item["panel_clone"].lift()
-        print(item["panel"])
 
 
 root = ct.CTk()
