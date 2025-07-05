@@ -18,7 +18,7 @@ class MyGui:
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
         self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
-        # self.browse_pdf()
+        self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
@@ -32,16 +32,15 @@ class MyGui:
         )
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
-    def browse_pdf(self):
-        self.pdf = ct.filedialog.askopenfilename(
-            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        )
-        if self.pdf:
-            self.root.destroy()  # Close the original window
-            self.open_pdf_window()
-        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        # self.root.destroy()
-        # self.open_pdf_window()
+    def browse_pdf(self):  # self.pdf = ct.filedialog.askopenfilename(
+        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        # )
+        # if self.pdf:
+        #     self.root.destroy()  # Close the original window
+        #     self.open_pdf_window()
+        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        self.root.destroy()
+        self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -469,6 +468,21 @@ class MyGui:
             hover_color=self.second_dark_hover,
             command=self.background_switch,
         )
+        self.push_to_front = ct.CTkButton(
+            master=self.top_frame,
+            text="Push To Front",
+            fg_color=self.main,
+            hover_color=self.main_hover,
+            command=self.push_item_to_front,
+            font=(
+                self.global_font_family,
+                self.global_font_size,
+                self.global_font_style,
+            ),
+            width=100,
+            height=30,
+            text_color=self.text_color,
+        )
 
     def update_side_panel(self):
         if self.current_item != -1:
@@ -477,6 +491,8 @@ class MyGui:
                 fg_color=item["bg_color"],
             )
             self.opacity_slider.set(item["opacity"])
+            self.push_to_front.grid(row=12, column=1, columnspan=2, pady=10)
+
             if "text" in item:
                 self.enable_background.grid_forget()
                 self.bg_color_button.configure(
@@ -584,6 +600,7 @@ class MyGui:
                 self.text_color_button.grid_forget()
                 self.text_entry.grid_forget()
         else:
+            self.push_to_front.grid_forget()
             self.stroke_width_slider.grid_forget()
             self.stroke_width_label.grid_forget()
             self.opacity_label.grid_forget()
@@ -1019,7 +1036,8 @@ class MyGui:
                     self.text_color,
                 )
                 print("Unkown error!")
-                return
+                print(e)
+                print("Unkown error!")
         if deleted == len(self.editing_items):
             # self.show_popup_window(
             #     self.pdf_window,
@@ -1655,6 +1673,10 @@ class MyGui:
                 value=item["opacity"],
             )
             item["bg_enabled"] = True
+
+    def push_item_to_front(self):
+        item = self.editing_items(self.current_item)
+        print(item["panel"])
 
 
 root = ct.CTk()

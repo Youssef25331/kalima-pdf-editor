@@ -1,7 +1,9 @@
 import shutil, math, os, sys
 import io
 from pypdf import PdfReader, PdfWriter
-from pypdf.constants import UserAccessPermissions
+
+# from weasyprint import HTML, CSS
+
 import pymupdf
 import cryptography
 from PIL import Image
@@ -144,6 +146,37 @@ def resize_and_save_image(
         raise ValueError(f"Image file not found: {input_path}")
     except Exception as e:
         raise ValueError(f"Error processing image: {str(e)}")
+
+
+def test_pdf(output_path, arabic_text):
+    # HTML content with embedded CSS to use a custom TTF font
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            @font-face {{
+                font-family: 'Amiri';
+                src: url('file:///G:/IamSaudi-Bold.ttf') format('truetype');
+            }}
+            body {{
+                font-family: 'Amiri', sans-serif;
+                direction: rtl;
+                text-align: right;
+                font-size: 16px;
+            }}
+        </style>
+    </head>
+    <body>
+        <p>{arabic_text}</p>
+    </body>
+    </html>
+    """
+
+    # Generate PDF
+    HTML(string=html_content).write_pdf(output_path, stylesheets=[CSS(string="")])
+
+
+# test_pdf(r"D:\hi.pdf", "بحب كمك")
 
 
 def create_text_pdf(
