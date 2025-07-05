@@ -315,13 +315,15 @@ class MyGui:
 
         self.resize_id = None
         self.pdf_window.bind("<Configure>", self.debouce_update)
-
-        # Actions after initalization
+        self.pdf_window.bind(
+            "<Key>",
+            lambda event: self.entry_keybinding(event),
+        )
 
         self.set_background()
-
         # Optional: Disable the main window while the new one is open
         self.pdf_window.mainloop()
+
 
     def setup_text_buttons(self):
         self.background_opacity_slider = ct.CTkSlider(
@@ -1691,6 +1693,14 @@ class MyGui:
         if "text" in item:
             item["panel_clone"].lift()
 
+    def entry_keybinding(self, event):
+        if str(event.widget).split(".")[-1] == "!entry" and event.state == 12:
+            if event.keycode == 86:
+                event.widget.event_generate("<<Paste>>")
+            if event.keycode == 65:
+                event.widget.event_generate("<<SelectAll>>")
+            if event.keycode == 67:
+                event.widget.event_generate("<<Copy>>")
 
 root = ct.CTk()
 app = MyGui(root)
