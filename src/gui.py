@@ -567,6 +567,7 @@ class MyGui:
                 self.text_entry.grid(row=10, padx=5, pady=15, column=0, columnspan=4)
                 self.font_menu.grid(row=11, column=0, padx=5, pady=0, columnspan=4)
             else:
+                self.stroke_color_button.grid_forget()
                 self.stroke_width_slider.grid_forget()
                 self.stroke_width_label.grid_forget()
                 self.opacity_slider.grid_forget()
@@ -602,6 +603,7 @@ class MyGui:
         else:
             self.push_to_front.grid_forget()
             self.stroke_width_slider.grid_forget()
+            self.stroke_color_button.grid_forget()
             self.stroke_width_label.grid_forget()
             self.opacity_label.grid_forget()
             self.enable_background.grid_forget()
@@ -1675,7 +1677,10 @@ class MyGui:
             item["bg_enabled"] = True
 
     def push_item_to_front(self):
-        item = self.editing_items(self.current_item)
+        item = self.editing_items[self.current_item]
+        item["panel"].lift()
+        if "text" in item:
+            item["panel_clone"].lift()
         print(item["panel"])
 
 

@@ -1,7 +1,6 @@
 import shutil, math, os, sys
 import io
 from pypdf import PdfReader, PdfWriter
-
 # from weasyprint import HTML, CSS
 
 import pymupdf
