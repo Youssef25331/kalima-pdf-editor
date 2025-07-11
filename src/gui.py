@@ -717,7 +717,6 @@ class MyGui:
                 item["is_include"] = self.exclusion_invert.get()
                 if "text" in item:
                     item["panel_clone"].place_forget()
-
             self.set_items_view()
 
     def set_items_view(self):
