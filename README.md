@@ -24,7 +24,7 @@ To run this project, ensure you have the following dependencies installed:
 
 Install these packages using `pip`. For example:
 ```bash
-pip install pypdf pdf2image fpdf Pillow customtkinter CTkColorPicker python-bidi arabic-reshaper fonttools pymupdf pywinstyles cryptography
+pip install pypdf pdf2image fpdf2 Pillow customtkinter CTkColorPicker python-bidi arabic-reshaper fonttools pymupdf pywinstyles cryptography
 ```
 ---
 ## Usage
