@@ -256,7 +256,13 @@ class AskColor(customtkinter.CTkToplevel):
             self.entry.configure(text_color="white")
 
     def update_colors_entry(self, event=None):
-        color = self.entry.get()
+        if self.entry.get()[0] == "#":
+            normalized_color = self.entry.get()
+        else:
+            normalized_color = self.entry.get()
+            normalized_color = "#" + normalized_color
+
+        color = normalized_color
         self.default_hex_color = color
         self.slider.configure(progress_color=self.default_hex_color)
         self.entry.configure(fg_color=self.default_hex_color)
