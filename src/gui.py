@@ -631,6 +631,7 @@ class MyGui:
             self.editing_items[self.current_item] = {
                 "index": item["index"],
                 "deleted": True,
+                "related_pages": [],
             }
         self.current_item = -1
         self.update_side_panel()
@@ -711,18 +712,11 @@ class MyGui:
                     and item["is_include"]
                 )
             ):
-                print(
-                    self.current_page_number in item["related_pages"]
-                    and item["is_include"]
-                )
                 item["panel"].place_forget()
                 item["related_pages"] = values
                 item["is_include"] = self.exclusion_invert.get()
-                print("this item was changed")
                 if "text" in item:
                     item["panel_clone"].place_forget()
-            else:
-                print("this item was not changed")
 
             self.set_items_view()
 
@@ -1086,8 +1080,8 @@ class MyGui:
                         item_translations[0][1],
                         is_final,
                         item_translations[1],
-                        self.exclusion_list,
-                        invert=self.is_include,
+                        item["related_pages"],
+                        invert=item["is_include"],
                         owner_pw=self.encryption_key,
                     )
                 else:
