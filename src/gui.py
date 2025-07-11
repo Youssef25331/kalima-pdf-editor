@@ -639,7 +639,19 @@ class MyGui:
         input_text = self.exclusion_entry.get()
         try:
             values = [int(x.strip()) for x in input_text.split(",") if x.strip()]
-            if values and not self.exclusion_invert.get():  # Ensure list isn’t empty
+            # for value in values:
+            #     if value < 1 or value > self.pdf_page_count:
+            #         self.show_popup_window(
+            #             self.pdf_window,
+            #             "Error",
+            #             "Out of range!",
+            #             self.fail,
+            #             "Some of the numbers aren't valid page numbers",
+            #             self.text_color,
+            #         )
+            #         return
+
+            if self.exclusion_invert.get():  # Ensure list isn’t empty
                 self.exclusion_list = values
                 self.is_include = False
                 self.show_popup_window(
