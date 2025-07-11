@@ -19,7 +19,7 @@ class MyGui:
         self.root.minsize(400, 500)
         self.root.title("Kalima-PDF-Editor")
         self.root.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
-        # self.browse_pdf()
+        self.browse_pdf()
         self.root.configure(fg_color="#0e0e0f")
         self.pdf_button = ct.CTkButton(
             master=self.root,
@@ -34,15 +34,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        self.pdf = ct.filedialog.askopenfilename(
-            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        )
-        if self.pdf:
-            self.root.destroy()  # Close the original window
-            self.open_pdf_window()
-        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        # self.root.destroy()
-        # self.open_pdf_window()
+        # self.pdf = ct.filedialog.askopenfilename(
+        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        # )
+        # if self.pdf:
+        #     self.root.destroy()  # Close the original window
+        #     self.open_pdf_window()
+        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        self.root.destroy()
+        self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -331,7 +331,7 @@ class MyGui:
             master=self.top_frame,
             button_corner_radius=4,
             button_color=self.main_hover,
-            from_=0.1,
+            from_=0,
             to=1,
             command=self.background_opacity_picker,
             width=100,
@@ -680,35 +680,35 @@ class MyGui:
                 "Invalid input - use numbers like '1, 2, 3, 4'!",
                 self.text_color,
             )
-        # self.hide_excluded_items(values)
+        self.hide_excluded_items(values)
 
-    # def hide_excluded_items(self, values: List[int]):
-    #     for item in self.editing_items:
-    #         item["is_include"] = self.is_include
-    #         item["last_x"] = item["panel"].winfo_x() + item["panel"].winfo_width() / 2
-    #         item["last_y"] = item["panel"].winfo_y() + item["panel"].winfo_height() / 2
-    #         last_related = item["related_pages"]
-    #         if (
-    #             (
-    #                 self.current_page_number in item["related_pages"]
-    #                 and not item["is_include"]
-    #             )
-    #             or -1 in last_related
-    #             # or self.current_page_number not in item["related_pages"]
-    #             # and item["is_include"]
-    #         ):
-    #             print(item["related_pages"])
-    #             item["related_pages"] = values
-    #             item["panel"].place(x=item["last_x"], y=item["last_y"])
-    #             if "text" in item:
-    #                 item["panel_clone"].place(x=item["last_x"], y=item["last_y"])
-    #         else:
-    #             item["panel"].place_forget()
-    #             if "text" in item:
-    #                 item["panel_clone"].place_forget()
+    def hide_excluded_items(self, values: List[int]):
+        for item in self.editing_items:
+            item["is_include"] = self.is_include
+            item["last_x"] = item["panel"].winfo_x() + item["panel"].winfo_width() / 2
+            item["last_y"] = item["panel"].winfo_y() + item["panel"].winfo_height() / 2
+            last_related = item["related_pages"]
+            if (
+                (
+                    self.current_page_number in item["related_pages"]
+                    and not item["is_include"]
+                )
+                or -1 in last_related
+                # or self.current_page_number not in item["related_pages"]
+                # and item["is_include"]
+            ):
+                print(item["related_pages"])
+                item["related_pages"] = values
+                item["panel"].place(x=item["last_x"], y=item["last_y"])
+                if "text" in item:
+                    item["panel_clone"].place(x=item["last_x"], y=item["last_y"])
+            else:
+                item["panel"].place_forget()
+                if "text" in item:
+                    item["panel_clone"].place_forget()
 
-    #     # for item in self.editing_items:
-    #     #   item["panel"].place_forget()
+        # for item in self.editing_items:
+        #   item["panel"].place_forget()
 
     def set_page(self, event):
         input_text = self.page_entry.get()
@@ -849,7 +849,7 @@ class MyGui:
         item = self.editing_items[self.current_item]
         item["bg_opacity"] = round(value, 1)
         pywinstyles.set_opacity(
-            item["panel"], value=item["opacity"] * (item["bg_opacity"] or 1)
+            item["panel"], value=item["opacity"] * (item["bg_opacity"])
         )
         self.background_opacity_entry.delete(0, "end")
         self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
@@ -861,10 +861,10 @@ class MyGui:
             if 0 <= value <= 1:
                 item["bg_opacity"] = round(value, 1)
                 self.background_opacity_entry.delete(0, "end")
-                self.background_opacity_entry.insert(0, str(item["opacity"]))
+                self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
                 self.background_opacity_slider.set(value)
                 pywinstyles.set_opacity(
-                    item["panel"], value=item["opacity"] * (item["bg_opacity"] or 1)
+                    item["panel"], value=item["opacity"] * (item["bg_opacity"])
                 )
             else:
                 self.show_popup_window(
