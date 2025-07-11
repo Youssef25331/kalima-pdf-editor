@@ -651,7 +651,7 @@ class MyGui:
             #         )
             #         return
 
-            if self.exclusion_invert.get():  # Ensure list isn’t empty
+            if values and not self.exclusion_invert.get():  # Ensure list isn’t empty
                 self.exclusion_list = values
                 self.is_include = False
                 self.show_popup_window(
@@ -683,6 +683,8 @@ class MyGui:
                     "No Values where entered.",
                     self.text_color,
                 )
+
+            self.hide_excluded_items(values)
         except ValueError:
             self.show_popup_window(
                 self.pdf_window,
@@ -692,35 +694,61 @@ class MyGui:
                 "Invalid input - use numbers like '1, 2, 3, 4'!",
                 self.text_color,
             )
-        self.hide_excluded_items(values)
 
     def hide_excluded_items(self, values: List[int]):
         for item in self.editing_items:
-            item["is_include"] = self.is_include
-            item["last_x"] = item["panel"].winfo_x() + item["panel"].winfo_width() / 2
-            item["last_y"] = item["panel"].winfo_y() + item["panel"].winfo_height() / 2
+            item["last_x"] = item["panel"].winfo_x()
+            item["last_y"] = item["panel"].winfo_y()
             last_related = item["related_pages"]
             if (
                 (
-                    self.current_page_number in item["related_pages"]
+                    self.current_page_number not in item["related_pages"]
                     and not item["is_include"]
                 )
                 or -1 in last_related
-                # or self.current_page_number not in item["related_pages"]
-                # and item["is_include"]
+                or (
+                    self.current_page_number in item["related_pages"]
+                    and item["is_include"]
+                )
             ):
-                print(item["related_pages"])
+                print(
+                    self.current_page_number in item["related_pages"]
+                    and item["is_include"]
+                )
+                item["panel"].place_forget()
                 item["related_pages"] = values
+                item["is_include"] = self.exclusion_invert.get()
+                print("this item was changed")
+                if "text" in item:
+                    item["panel_clone"].place_forget()
+            else:
+                print("this item was not changed")
+
+            self.set_items_view()
+
+    def set_items_view(self):
+        for item in self.editing_items:
+            if (
+                (
+                    self.current_page_number not in item["related_pages"]
+                    and not item["is_include"]
+                )
+                or -1 in item["related_pages"]
+                or (
+                    self.current_page_number in item["related_pages"]
+                    and item["is_include"]
+                )
+            ):
                 item["panel"].place(x=item["last_x"], y=item["last_y"])
                 if "text" in item:
-                    item["panel_clone"].place(x=item["last_x"], y=item["last_y"])
+                    item["panel_clone"].place(
+                        x=item["last_x"],
+                        y=item["last_y"],
+                    )
             else:
                 item["panel"].place_forget()
                 if "text" in item:
                     item["panel_clone"].place_forget()
-
-        # for item in self.editing_items:
-        #   item["panel"].place_forget()
 
     def set_page(self, event):
         input_text = self.page_entry.get()
@@ -749,6 +777,8 @@ class MyGui:
                 self.text_color,
             )
             print("Invalid input - use numbers like '10'!")
+
+        # self.set_items_view()
 
     def load_fonts(self):
         active_fonts = []
@@ -985,6 +1015,7 @@ class MyGui:
         elif (not right) and self.current_page_number > 1:
             self.current_page_number -= 1
             self.set_background()
+        self.set_items_view()
 
     def convert_pdf(self):
         save_path = ct.filedialog.asksaveasfilename(
@@ -1458,6 +1489,9 @@ class MyGui:
         item["panel"].place(x=new_x, y=new_y, anchor="center")
         if "text" in item:
             item["panel_clone"].place(x=new_x, y=new_y, anchor="center")
+
+        item["last_x"] = new_x
+        item["last_y"] = new_y
 
     def resize_image(self, event=None):
         orig_width, orig_height = self.base_pdf.size
