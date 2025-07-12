@@ -150,49 +150,36 @@ def resize_and_save_image(
 def test_pdf(output_path, arabic_text):
     text_rgb = hex_to_rgb("#fffffff0")
     html_content = f"""
-    <html>
-    <head>
-        <style>
-            * {{
-                width:100%;
-                height:100%;
-                margin:0px;
-                padding:0px;
-                }}
-            @font-face {{
-                # font-family: 'saudi';
-                src: url('file:///D:/IamSaudi-Bold.ttf') format('truetype');
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stroked Text with WeasyPrint</title>
+    <style>
+        body {{ 
+            margin: 0;
+            font-family: Arial, sans-serif;
+            align-items:cetner;
+
+        }}
+        @page {{ 
+            size: 495pt 174pt;
+            margin: 0mm;
+            padding:0
+        }}
+        svg{{
+            background-color:black;
+            text-align:center;
+            display:flex;
             }}
-            @page {{
-                size: 495pt 174pt;
-                margin: 0mm; /* Set margin on each page */
+        text{{
+            text-align:center;
             }}
-            .stroked-text {{
-              color: red; /* Fill color of the text */
-              text-shadow: 
-                -1px -1px 0 #000, /* Top-left */
-                 1px -1px 0 #000, /* Top-right */
-                -1px  1px 0 #000, /* Bottom-left */
-                 1px  1px 0 #000; /* Bottom-right */
-            }}
-            p {{
-                line-height: 174pt;
-                width:100%;
-                height:100%;
-                margin:0px;
-                padding:0px;
-                font-family: arial;
-                direction: rtl;
-                text-align: right;
-                font-size: 31.933758620689655px;
-                text-align: center;
-                background-color:white;
-                white-space: nowrap;
-            }}
-        </style>
-    </head>
-            <p class="stroked-text">Hello, WeasyPrint!</p>
-    </html>
+    </style>
+</head>
+    <svg width="495pt" height="174pt">
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30pt" stroke="black" stroke-width="2" fill="#ff0000">Hello, WeasyPrint!</text>
+    </svg>
+</html>
     """
 
     # Generate PDF
@@ -227,33 +214,31 @@ def create_text_pdf(
                 padding:0;
                 }}
             @font-face {{
-                font-family: {font_family};
+                font-family: saudi;
                 src: url('file:///D:/IamSaudi-Bold.ttf') format('truetype');
             }}
             @page {{
                 size: {dimensions[0]}pt {dimensions[1]}pt;
-                margin: 0mm; /* Set margin on each page */
+                margin: 0; 
+                padding:0;
                 opacity:{opacity};
             }}
-            p {{
-                line-height: {dimensions[1]}pt;
-                width:100%;
-                height:100%;
+            svg {{
+                # line-height: {dimensions[1]}pt;
                 margin:0;
-                padding:0;
-                padding-left:0.1pt;
-                font-family:{font_family};
+                # padding-left:0.1pt;
+                font-family:saudi;
                 direction: rtl;
                 text-align: right;
-                font-size: {font_size}pt;
-                text-align: center;
+                # font-size: {font_size}pt;
+                # text-align: center;
                 background-color:rgba{bg_color};
-                color:{text_color};
-                white-space: nowrap;
             }}
         </style>
     </head>
-            <p>{text}</p>
+    <svg width="{dimensions[0]}pt" height="{dimensions[1]}pt">
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="{font_size}pt" stroke="{stroke_color}" stroke-width="{stroke_width}" fill="{text_color}">{text}</text>
+    </svg>
     </html>
     """
 
