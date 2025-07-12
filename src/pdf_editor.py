@@ -1,7 +1,7 @@
 import shutil, math, os, sys
 import io
 from pypdf import PdfReader, PdfWriter
-# from weasyprint import HTML, CSS
+from weasyprint import HTML, CSS
 
 import pymupdf
 import cryptography
@@ -148,26 +148,50 @@ def resize_and_save_image(
 
 
 def test_pdf(output_path, arabic_text):
-    # HTML content with embedded CSS to use a custom TTF font
+    text_rgb = hex_to_rgb("#fffffff0")
     html_content = f"""
     <html>
     <head>
         <style>
+            * {{
+                width:100%;
+                height:100%;
+                margin:0px;
+                padding:0px;
+                }}
             @font-face {{
-                font-family: 'Amiri';
-                src: url('file:///G:/IamSaudi-Bold.ttf') format('truetype');
+                # font-family: 'saudi';
+                src: url('file:///D:/IamSaudi-Bold.ttf') format('truetype');
             }}
-            body {{
-                font-family: 'Amiri', sans-serif;
+            @page {{
+                size: 495pt 174pt;
+                margin: 0mm; /* Set margin on each page */
+            }}
+            .stroked-text {{
+              color: red; /* Fill color of the text */
+              text-shadow: 
+                -1px -1px 0 #000, /* Top-left */
+                 1px -1px 0 #000, /* Top-right */
+                -1px  1px 0 #000, /* Bottom-left */
+                 1px  1px 0 #000; /* Bottom-right */
+            }}
+            p {{
+                line-height: 174pt;
+                width:100%;
+                height:100%;
+                margin:0px;
+                padding:0px;
+                font-family: arial;
                 direction: rtl;
                 text-align: right;
-                font-size: 16px;
+                font-size: 31.933758620689655px;
+                text-align: center;
+                background-color:white;
+                white-space: nowrap;
             }}
         </style>
     </head>
-    <body>
-        <p>{arabic_text}</p>
-    </body>
+            <p class="stroked-text">Hello, WeasyPrint!</p>
     </html>
     """
 
@@ -175,7 +199,7 @@ def test_pdf(output_path, arabic_text):
     HTML(string=html_content).write_pdf(output_path, stylesheets=[CSS(string="")])
 
 
-# test_pdf(r"D:\hi.pdf", "بحب كمك")
+# test_pdf(r"D:\hi.pdf", "بحب كمكبحب كمكبحب كمكبحب كمك")
 
 
 def create_text_pdf(
@@ -191,91 +215,136 @@ def create_text_pdf(
     stroke_width=0,
     stroke_color="FFFFFF",
 ):
+    rgb_bg = hex_to_rgb(bg_color)
+    bg_color = (rgb_bg[0], rgb_bg[1], rgb_bg[2], bg_opacity)
+
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            *{{
+                margin:0;
+                padding:0;
+                }}
+            @font-face {{
+                font-family: {font_family};
+                src: url('file:///D:/IamSaudi-Bold.ttf') format('truetype');
+            }}
+            @page {{
+                size: {dimensions[0]}pt {dimensions[1]}pt;
+                margin: 0mm; /* Set margin on each page */
+                opacity:{opacity};
+            }}
+            p {{
+                line-height: {dimensions[1]}pt;
+                width:100%;
+                height:100%;
+                margin:0;
+                padding:0;
+                padding-left:0.1pt;
+                font-family:{font_family};
+                direction: rtl;
+                text-align: right;
+                font-size: {font_size}pt;
+                text-align: center;
+                background-color:rgba{bg_color};
+                color:{text_color};
+                white-space: nowrap;
+            }}
+        </style>
+    </head>
+            <p>{text}</p>
+    </html>
+    """
+
+    # Generate PDF
+    HTML(string=html_content).write_pdf(output_path, stylesheets=[CSS(string="")])
+
     # Create a PDF with text at specified dimensions, with optional text and background colors.
-    pdf = FPDF("P", "pt", dimensions)
-    pdf.set_margins(0, 0)
-    pdf.set_auto_page_break(False)
-    pdf.add_page()
+    # pdf = FPDF("P", "pt", dimensions)
+    # pdf.set_margins(0, 0)
+    # pdf.set_auto_page_break(False)
+    # pdf.add_page()
 
-    text_rgb = hex_to_rgb(text_color)
-    stroke_rgb = hex_to_rgb(stroke_color)
-    reshaped_text = arabic_reshaper.reshape(text)  # Connects letters
-    normalized_text = str(get_display(reshaped_text))
-    pdf.set_text_color(*text_rgb)
-    fonts = load_project_fonts(False)
-    for font_name, font_path, _ in fonts:
-        if font_path:
-            pdf.add_font(font_name, "", str(font_path), uni=True)
+    # text_rgb = hex_to_rgb(text_color)
+    # stroke_rgb = hex_to_rgb(stroke_color)
+    # reshaped_text = arabic_reshaper.reshape(text)  # Connects letters
+    # normalized_text = str(get_display(reshaped_text))
+    # pdf.set_text_color(*text_rgb)
+    # fonts = load_project_fonts(False)
+    # for font_name, font_path, _ in fonts:
+    #     if font_path:
+    #         pdf.add_font(font_name, "", str(font_path), uni=True)
 
-    if not font_size:
-        font_size = int(dimensions[0] * 0.09)
+    # if not font_size:
+    #     font_size = int(dimensions[0] * 0.09)
 
-    bg_rgb = hex_to_rgb(bg_color)
-    pdf.set_fill_color(*bg_rgb)
-    pdf.set_font(font_family, size=int(math.floor(font_size)))
+    # bg_rgb = hex_to_rgb(bg_color)
+    # pdf.set_fill_color(*bg_rgb)
+    # pdf.set_font(font_family, size=int(math.floor(font_size)))
 
-    if opacity == 1 and bg_opacity == 1:
-        pdf.rect(
-            0, 0, 9999, 9999, style="F"
-        )  # I don't remember why I set those to 9999 but im sure there was a good reason.
-        pdf.set_draw_color(*stroke_rgb)
+    # if opacity == 1 and bg_opacity == 1:
+    #     pdf.rect(
+    #         0, 0, 9999, 9999, style="F"
+    #     )  # I don't remember why I set those to 9999 but im sure there was a good reason.
+    #     pdf.set_draw_color(*stroke_rgb)
 
-        with pdf.local_context(text_mode="FILL_STROKE", line_width=stroke_width):
-            pdf.cell(
-                dimensions[0],
-                dimensions[1],
-                text=normalized_text,
-                align="C",
-                ln=0,
-                border=0,
-            )
-        pdf.output(output_path)
+    #     with pdf.local_context(text_mode="FILL_STROKE", line_width=stroke_width):
+    #         pdf.cell(
+    #             dimensions[0],
+    #             dimensions[1],
+    #             text=normalized_text,
+    #             align="C",
+    #             ln=0,
+    #             border=0,
+    #         )
+    #     pdf.output(output_path)
 
-    elif opacity == 0:
-        pdf.output(output_path)
+    # elif opacity == 0:
+    #     pdf.output(output_path)
 
-    else:
-        pdf.rect(
-            0, 0, 9999, 9999, style="F"
-        )  # I don't remember why I set those to 9999 but im sure there was a good reason.
-        pdf.output(output_path)
-        convert_pdf_page(output_path, 1, temp_bg)
+    # else:
+    #     pdf.rect(
+    #         0, 0, 9999, 9999, style="F"
+    #     )  # I don't remember why I set those to 9999 but im sure there was a good reason.
+    #     pdf.output(output_path)
+    #     convert_pdf_page(output_path, 1, temp_bg)
 
-        text_pdf = FPDF("P", "pt", dimensions)
-        text_pdf.set_margins(0, 0)
-        text_pdf.set_auto_page_break(False)
-        text_pdf.add_page()
-        text_pdf.set_text_color(*text_rgb)
+    #     text_pdf = FPDF("P", "pt", dimensions)
+    #     text_pdf.set_margins(0, 0)
+    #     text_pdf.set_auto_page_break(False)
+    #     text_pdf.add_page()
+    #     text_pdf.set_text_color(*text_rgb)
 
-        text_pdf.set_font(font_family, size=int(math.floor(font_size)))
-        text_pdf.set_draw_color(*stroke_rgb)
+    #     text_pdf.set_font(font_family, size=int(math.floor(font_size)))
+    #     text_pdf.set_draw_color(*stroke_rgb)
 
-        with text_pdf.local_context(text_mode="FILL_STROKE", line_width=stroke_width):
-            text_pdf.cell(
-                dimensions[0],
-                dimensions[1],
-                text=normalized_text,
-                align="C",
-                ln=0,
-                border=0,
-            )
-        text_pdf.output(output_path)
-        convert_pdf_page(temp_pdf, 1, temp_text)
+    #     with text_pdf.local_context(text_mode="FILL_STROKE", line_width=stroke_width):
+    #         text_pdf.cell(
+    #             dimensions[0],
+    #             dimensions[1],
+    #             text=normalized_text,
+    #             align="C",
+    #             ln=0,
+    #             border=0,
+    #         )
+    #     text_pdf.output(output_path)
+    #     convert_pdf_page(temp_pdf, 1, temp_text)
 
-        img = Image.open(temp_text).convert("RGBA")
-        img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+    #     img = Image.open(temp_text).convert("RGBA")
+    #     img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
 
-        bg_img = Image.open(temp_bg).convert("RGBA")
-        bg_img = bg_img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
-        bg_img.putalpha(int(255 * bg_opacity * opacity))
+    #     bg_img = Image.open(temp_bg).convert("RGBA")
+    #     bg_img = bg_img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+    #     bg_img.putalpha(int(255 * bg_opacity * opacity))
 
-        layer = Image.new("RGBA", bg_img.size, (0, 0, 0, 0))
-        layer.paste(img, (0, 0))
-        layer2 = layer.copy()
-        layer2.putalpha(int(255 * opacity))
-        layer.paste(layer2, (0, 0), layer)
-        result = Image.alpha_composite(bg_img, layer)
-        result.save(temp_pdf, "PDF")
+    #     layer = Image.new("RGBA", bg_img.size, (0, 0, 0, 0))
+    #     layer.paste(img, (0, 0))
+    #     layer2 = layer.copy()
+    #     layer2.putalpha(int(255 * opacity))
+    #     layer.paste(layer2, (0, 0), layer)
+    #     result = Image.alpha_composite(bg_img, layer)
+    #     result.save(temp_pdf, "PDF")
 
 
 def convert_pdf_page(pdf_path, page_number, output, alpha=True):
