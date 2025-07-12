@@ -104,7 +104,7 @@ def load_project_fonts(generate=True):
             if font["OS/2"].fsType != 0:
                 break
         font_name = font["name"].getDebugName(4)
-        fonts.append((font_name, font_path, font_path))
+        fonts.append((font_name, font_path))
     return fonts
 
 
@@ -147,52 +147,11 @@ def resize_and_save_image(
         raise ValueError(f"Error processing image: {str(e)}")
 
 
-def test_pdf(output_path, arabic_text):
-    text_rgb = hex_to_rgb("#fffffff0")
-    html_content = f"""
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Stroked Text with WeasyPrint</title>
-    <style>
-        body {{ 
-            margin: 0;
-            font-family: Arial, sans-serif;
-            align-items:cetner;
-
-        }}
-        @page {{ 
-            size: 495pt 174pt;
-            margin: 0mm;
-            padding:0
-        }}
-        svg{{
-            background-color:black;
-            text-align:center;
-            display:flex;
-            }}
-        text{{
-            text-align:center;
-            }}
-    </style>
-</head>
-    <svg width="495pt" height="174pt">
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30pt" stroke="black" stroke-width="2" fill="#ff0000">Hello, WeasyPrint!</text>
-    </svg>
-</html>
-    """
-
-    # Generate PDF
-    HTML(string=html_content).write_pdf(output_path, stylesheets=[CSS(string="")])
-
-
-# test_pdf(r"D:\hi.pdf", "بحب كمكبحب كمكبحب كمكبحب كمك")
-
-
 def create_text_pdf(
     text,
     dimensions,
     opacity,
+    font_path,
     text_color="000000",
     bg_color=None,
     font_family="arial",
@@ -204,7 +163,8 @@ def create_text_pdf(
 ):
     rgb_bg = hex_to_rgb(bg_color)
     bg_color = (rgb_bg[0], rgb_bg[1], rgb_bg[2], bg_opacity)
-
+    font_path = str("file:///" + str(font_path[0].resolve())).replace("\\", "/")
+    print(font_path)
     html_content = f"""
     <html>
     <head>
@@ -215,7 +175,7 @@ def create_text_pdf(
                 }}
             @font-face {{
                 font-family: {font_family};
-                src: url('file:///D:/IamSaudi-Bold.ttf') format('truetype');
+                src: url('{font_path}') format('truetype');
             }}
             @page {{
                 size: {dimensions[0]}pt {dimensions[1]}pt;

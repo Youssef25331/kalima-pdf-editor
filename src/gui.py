@@ -74,6 +74,7 @@ class MyGui:
         self.mouse_frame_position_x = 0
         self.mouse_frame_position_y = 0
         self.encryption_key = ""
+        self.current_fonts = {}
 
         self.pdf_window.iconbitmap(pdf_editor.get_base_path() / "assets" / "logo.ico")
 
@@ -777,8 +778,9 @@ class MyGui:
         active_fonts = []
         fonts = pdf_editor.load_project_fonts()
         for font in fonts:
-            active_fonts.append(font[0])
-            ct.FontManager.load_font(str(font[2]))
+            active_fonts.append((font[0]))
+            self.current_fonts[font[0]] = [font[1]]
+            ct.FontManager.load_font(str(font[1]))
         return active_fonts
 
     def set_text(self, event):
@@ -1066,6 +1068,7 @@ class MyGui:
                             item["text"],
                             (item_translations[0][0], item_translations[0][1]),
                             item["opacity"],
+                            self.current_fonts[item["font_family"]],
                             bg_color=item["bg_color"],
                             text_color=item["text_color"],
                             font_family=item["font_family"],
