@@ -2,7 +2,6 @@ import shutil, math, os, sys
 import io
 from pypdf import PdfReader, PdfWriter
 from weasyprint import HTML, CSS
-
 import pymupdf
 import cryptography
 from PIL import Image
@@ -188,7 +187,7 @@ def create_text_pdf(
                 height:100%;
                 margin:0;
                 padding:0;
-                padding-left:0.1pt;
+                padding-left:0.2pt;
                 font-family:{font_family};
                 direction: rtl;
                 text-align: right;
