@@ -214,31 +214,33 @@ def create_text_pdf(
                 padding:0;
                 }}
             @font-face {{
-                font-family: saudi;
+                font-family: {font_family};
                 src: url('file:///D:/IamSaudi-Bold.ttf') format('truetype');
             }}
             @page {{
                 size: {dimensions[0]}pt {dimensions[1]}pt;
-                margin: 0; 
-                padding:0;
+                margin: 0mm; /* Set margin on each page */
                 opacity:{opacity};
             }}
-            svg {{
-                # line-height: {dimensions[1]}pt;
+            p {{
+                line-height: {dimensions[1]}pt;
+                width:100%;
+                height:100%;
                 margin:0;
-                # padding-left:0.1pt;
-                font-family:saudi;
+                padding:0;
+                padding-left:0.1pt;
+                font-family:{font_family};
                 direction: rtl;
                 text-align: right;
-                # font-size: {font_size}pt;
-                # text-align: center;
+                font-size: {font_size}pt;
+                text-align: center;
                 background-color:rgba{bg_color};
+                color:{text_color};
+                white-space: nowrap;
             }}
         </style>
     </head>
-    <svg width="{dimensions[0]}pt" height="{dimensions[1]}pt">
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="{font_size}pt" stroke="{stroke_color}" stroke-width="{stroke_width}" fill="{text_color}">{text}</text>
-    </svg>
+            <p>{text}</p>
     </html>
     """
 
