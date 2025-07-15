@@ -34,15 +34,15 @@ class MyGui:
         self.pdf_button.place(relx=0.5, rely=0.5, anchor="center")
 
     def browse_pdf(self):
-        # self.pdf = ct.filedialog.askopenfilename(
-        #     initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
-        # )
-        # if self.pdf:
-        #     self.root.destroy()  # Close the original window
-        #     self.open_pdf_window()
-        self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
-        self.root.destroy()
-        self.open_pdf_window()
+        self.pdf = ct.filedialog.askopenfilename(
+            initialdir=Path.cwd(), filetypes=[("PDF Files", "*.pdf")]
+        )
+        if self.pdf:
+            self.root.destroy()  # Close the original window
+            self.open_pdf_window()
+        # self.pdf = "../../kalima-pdf-editor/Testing/Testing_PDF.pdf"
+        # self.root.destroy()
+        # self.open_pdf_window()
 
     def open_pdf_window(self):
         # Create a new window
@@ -811,7 +811,11 @@ class MyGui:
             item["panel"].configure(fg_color=color)
             if "text" in item:
                 item["panel_clone"].configure(fg_color=color)
-                pywinstyles.set_opacity(item["panel_clone"], color=color)
+                pywinstyles.set_opacity(
+                    item["panel_clone"],
+                    color=color,
+                    value=item["opacity"] * item["bg_opacity"],
+                )
             else:
                 if not item["bg_enabled"]:
                     pywinstyles.set_opacity(
@@ -830,7 +834,7 @@ class MyGui:
 
             pywinstyles.set_opacity(
                 item["panel_clone"],
-                color="black",
+                color=item["bg_color"],
                 value=item["opacity"],
             )
         else:
@@ -856,6 +860,7 @@ class MyGui:
                 pywinstyles.set_opacity(
                     item["panel"], value=item["opacity"] * item["bg_opacity"]
                 )
+
                 pywinstyles.set_opacity(
                     item["panel_clone"],
                     color="black",
@@ -886,7 +891,7 @@ class MyGui:
         item = self.editing_items[self.current_item]
         item["bg_opacity"] = round(value, 1)
         pywinstyles.set_opacity(
-            item["panel"], value=item["opacity"] * (item["bg_opacity"])
+            item["panel"], value=item["opacity"] * item["bg_opacity"]
         )
         self.background_opacity_entry.delete(0, "end")
         self.background_opacity_entry.insert(0, str(item["bg_opacity"]))
