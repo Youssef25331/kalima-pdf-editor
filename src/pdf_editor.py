@@ -8,8 +8,8 @@ from PIL import Image
 from fpdf import FPDF
 from fontTools.ttLib import TTFont
 from pathlib import Path
-import arabic_reshaper
 from bidi.algorithm import get_display
+import pdfkit
 
 
 def get_base_path():
@@ -38,6 +38,7 @@ temp_loop_pdf = temp_dir / "Loop.pdf"
 temp_background = temp_dir / "Temp"
 temp_text = temp_dir / "Temp_Text.png"
 temp_bg = temp_dir / "Temp_bg.png"
+temp_html = temp_dir / "Temp_HTML.html"
 
 
 if getattr(sys, "frozen", False):
@@ -147,64 +148,75 @@ def resize_and_save_image(
 
 
 def create_text_pdf(
-    text,
-    dimensions,
-    opacity,
-    font_path,
-    text_color="000000",
-    bg_color=None,
-    font_family="arial",
-    font_size=None,
-    output_path=temp_pdf,
-    bg_opacity=1,
-    stroke_width=0,
-    stroke_color="FFFFFF",
+    # text,
+    # dimensions,
+    # opacity,
+    # font_path,
+    # text_color="000000",
+    # bg_color=None,
+    # font_family="arial",
+    # font_size=None,
+    # output_path=temp_pdf,
+    # bg_opacity=1,
+    # stroke_width=0,
+    # stroke_color="FFFFFF",
 ):
-    rgb_bg = hex_to_rgb(bg_color)
-    bg_color = (rgb_bg[0], rgb_bg[1], rgb_bg[2], bg_opacity)
-    font_path = str("file:///" + str(font_path[0].resolve())).replace("\\", "/")
-    print(font_path)
-    html_content = f"""
-    <html>
-    <head>
-        <style>
-            *{{
-                margin:0;
-                padding:0;
-                }}
-            @font-face {{
-                font-family: {font_family};
-                src: url('{font_path}') format('truetype');
-            }}
-            @page {{
-                size: {dimensions[0]}pt {dimensions[1]}pt;
-                margin: 0mm; /* Set margin on each page */
-                opacity:{opacity};
-            }}
-            p {{
-                line-height: {dimensions[1]}pt;
-                width:100%;
-                height:100%;
-                margin:0;
-                padding:0;
-                padding-left:0.2pt;
-                font-family:{font_family};
-                direction: rtl;
-                text-align: right;
-                font-size: {font_size}pt;
-                text-align: center;
-                background-color:rgba{bg_color};
-                color:{text_color};
-                white-space: nowrap;
-            }}
-        </style>
-    </head>
-            <p>{text}</p>
-    </html>
+    options = {
+        "enable-local-file-access": "",
+        "margin-top": "0in",
+        "margin-right": "0in",
+        "margin-bottom": "0in",
+        "margin-left": "0in",
+        "page-width": "400pt",
+        "page-height": "400pt",
+        "disable-smart-shrinking": "",
+        "dpi": 400,
+    }
+
+    body = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                }
+            @font-face {
+             font-family: saudi;
+                 src: url('IamSaudi-Bold.ttf') format('truetype');
+                }
+                @page {
+                    size: 400pt 400pt;
+                    margin: 0;
+                    padding: 0;
+
+                }
+                svg {
+                    margin: 0;
+                    font-family: saudi;
+                    direction: rtl;
+           
+        }
+            </style>
+        </head>
+        <body>
+            <svg width="400pt" height="400pt">
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30pt" font-family="saudi" fill="red" direction="rtl" unicode-bidi="bidi-override" stroke-width="0.5" stroke="green">مرحبا بالعالم</text>
+            </svg>
+        </body>
+        </html>
     """
 
-    # Generate PDF
-    HTML(string=html_content).write_pdf(output_path, stylesheets=[CSS(string="")])
+    with open(temp_html, "w", encoding="utf-8") as file:
+        file.write(body)
+
+    pdfkit.from_url(
+        "Temp/Temp_HTML.html",
+        "./out.pdf",
+        options=options,
+    )
 
     # Create a PDF with text at specified dimensions, with optional text and background colors.
     # pdf = FPDF("P", "pt", dimensions)
@@ -291,6 +303,9 @@ def create_text_pdf(
     #     layer.paste(layer2, (0, 0), layer)
     #     result = Image.alpha_composite(bg_img, layer)
     #     result.save(temp_pdf, "PDF")
+
+
+create_text_pdf()
 
 
 def convert_pdf_page(pdf_path, page_number, output, alpha=True):
@@ -401,7 +416,7 @@ def merge_pdfs(
     is_final,
     start_loc=(0, 0),
     exclude_pages=None,
-    overlay_pdf_path=temp_pdf,
+    overlay_pdf_path=temp_dir / "Temp_2.pdf",
     base_pdf_path=temp_loop_pdf,
     invert=False,
     owner_pw=None,
