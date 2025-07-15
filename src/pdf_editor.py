@@ -1,7 +1,8 @@
 import shutil, math, os, sys
 import io
 from pypdf import PdfReader, PdfWriter
-from weasyprint import HTML, CSS
+
+# from weasyprint import HTML, CSS
 import pymupdf
 import cryptography
 from PIL import Image
@@ -173,7 +174,11 @@ def create_text_pdf(
         "dpi": 400,
     }
 
-    body = """
+    dimensions = [400, 400]
+    bg_opacity = 0.5
+    opacity = 1
+    text = """
+
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -208,15 +213,77 @@ def create_text_pdf(
         </body>
         </html>
     """
+    background = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                }
+            @font-face {
+             font-family: saudi;
+                 src: url('IamSaudi-Bold.ttf') format('truetype');
+                }
+                @page {
+                    size: 400pt 400pt;
+                    margin: 0;
+                    padding: 0;
+
+                }
+                svg {
+                    margin: 0;
+                    font-family: saudi;
+                    direction: rtl;
+                    background-color: #FF0000;
+           
+        }
+            </style>
+        </head>
+        <body>
+            <svg width="400pt" height="400pt">
+            </svg>
+        </body>
+        </html>
+    """
 
     with open(temp_html, "w", encoding="utf-8") as file:
-        file.write(body)
+        file.write(text)
 
     pdfkit.from_url(
-        "Temp/Temp_HTML.html",
-        "./out.pdf",
+        temp_html.as_uri(),
+        temp_pdf,
         options=options,
     )
+    convert_pdf_page(temp_pdf, 1, temp_text)
+
+    with open(temp_html, "w", encoding="utf-8") as file:
+        file.write(background)
+
+    pdfkit.from_url(
+        temp_html.as_uri(),
+        temp_pdf,
+        options=options,
+    )
+
+    convert_pdf_page(temp_pdf, 1, temp_bg)
+
+    img = Image.open(temp_text).convert("RGBA")
+    img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+
+    bg_img = Image.open(temp_bg).convert("RGBA")
+    bg_img = bg_img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+    bg_img.putalpha(int(255 * bg_opacity * opacity))
+
+    layer = Image.new("RGBA", bg_img.size, (0, 0, 0, 0))
+    layer.paste(img, (0, 0))
+    layer2 = layer.copy()
+    layer2.putalpha(int(255 * opacity))
+    layer.paste(layer2, (0, 0), layer)
+    result = Image.alpha_composite(bg_img, layer)
+    result.save(temp_pdf, "PDF")
 
     # Create a PDF with text at specified dimensions, with optional text and background colors.
     # pdf = FPDF("P", "pt", dimensions)
@@ -287,25 +354,22 @@ def create_text_pdf(
     #             border=0,
     #         )
     #     text_pdf.output(output_path)
-    #     convert_pdf_page(temp_pdf, 1, temp_text)
+    # convert_pdf_page(temp_pdf, 1, temp_text)
 
-    #     img = Image.open(temp_text).convert("RGBA")
-    #     img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+    # img = Image.open(temp_text).convert("RGBA")
+    # img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
 
-    #     bg_img = Image.open(temp_bg).convert("RGBA")
-    #     bg_img = bg_img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
-    #     bg_img.putalpha(int(255 * bg_opacity * opacity))
+    # bg_img = Image.open(temp_bg).convert("RGBA")
+    # bg_img = bg_img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+    # bg_img.putalpha(int(255 * bg_opacity * opacity))
 
-    #     layer = Image.new("RGBA", bg_img.size, (0, 0, 0, 0))
-    #     layer.paste(img, (0, 0))
-    #     layer2 = layer.copy()
-    #     layer2.putalpha(int(255 * opacity))
-    #     layer.paste(layer2, (0, 0), layer)
-    #     result = Image.alpha_composite(bg_img, layer)
-    #     result.save(temp_pdf, "PDF")
-
-
-create_text_pdf()
+    # layer = Image.new("RGBA", bg_img.size, (0, 0, 0, 0))
+    # layer.paste(img, (0, 0))
+    # layer2 = layer.copy()
+    # layer2.putalpha(int(255 * opacity))
+    # layer.paste(layer2, (0, 0), layer)
+    # result = Image.alpha_composite(bg_img, layer)
+    # result.save(temp_pdf, "PDF")
 
 
 def convert_pdf_page(pdf_path, page_number, output, alpha=True):
@@ -324,6 +388,9 @@ def convert_pdf_page(pdf_path, page_number, output, alpha=True):
     except Exception as e:
         print(f"Error: {str(e)}")
         return False
+
+
+create_text_pdf()
 
 
 def convert_pdf_to_image_pdf(
