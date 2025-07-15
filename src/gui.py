@@ -1099,6 +1099,7 @@ class MyGui:
                 )
                 print("Unkown error!")
                 return
+
             except Exception as e:
                 self.show_popup_window(
                     self.pdf_window,
@@ -1111,6 +1112,8 @@ class MyGui:
                 print("Unkown error!")
                 print(e)
                 print("Unkown error!")
+                return
+
         if deleted == len(self.editing_items):
             # self.show_popup_window(
             #     self.pdf_window,

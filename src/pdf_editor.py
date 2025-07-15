@@ -1,8 +1,7 @@
 import shutil, math, os, sys
+import re
 import io
 from pypdf import PdfReader, PdfWriter
-
-# from weasyprint import HTML, CSS
 import pymupdf
 import cryptography
 from PIL import Image
@@ -148,102 +147,99 @@ def resize_and_save_image(
         raise ValueError(f"Error processing image: {str(e)}")
 
 
+def is_arabic(text):
+    arabic_regex = r'[\u0600-\u06FF]'
+    return bool(re.search(arabic_regex, text))
+
 def create_text_pdf(
-    # text,
-    # dimensions,
-    # opacity,
-    # font_path,
-    # text_color="000000",
-    # bg_color=None,
-    # font_family="arial",
-    # font_size=None,
-    # output_path=temp_pdf,
-    # bg_opacity=1,
-    # stroke_width=0,
-    # stroke_color="FFFFFF",
+    text,
+    dimensions,
+    opacity,
+    font_path,
+    text_color="#000000",
+    bg_color=None,
+    font_family="arial",
+    font_size=None,
+    output_path=temp_pdf,
+    bg_opacity=1,
+    stroke_width=0,
+    stroke_color="FFFFFF",
 ):
+
+    direction = "rtl" if is_arabic(text) else "ltr"
+    font_path = str("file:///" + str(font_path[0].resolve())).replace("\\", "/")
     options = {
         "enable-local-file-access": "",
         "margin-top": "0in",
         "margin-right": "0in",
         "margin-bottom": "0in",
         "margin-left": "0in",
-        "page-width": "400pt",
-        "page-height": "400pt",
+        "page-width": str(dimensions[0]) + "pt",
+        "page-height": str(dimensions[1]) + "pt",
         "disable-smart-shrinking": "",
         "dpi": 400,
     }
-
-    dimensions = [400, 400]
-    bg_opacity = 0.5
-    opacity = 1
-    text = """
-
+    text = f"""
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <style>
-                * {
+                * {{
                     margin: 0;
                     padding: 0;
-                }
-            @font-face {
-             font-family: saudi;
-                 src: url('IamSaudi-Bold.ttf') format('truetype');
-                }
-                @page {
-                    size: 400pt 400pt;
+                }} 
+            @font-face {{
+                 font-family: {font_family};
+                 src: url({font_path}) format('truetype');
+                }}
+                @page {{
+                    size: {dimensions[0]}pt {dimensions[1]}pt;
                     margin: 0;
                     padding: 0;
 
-                }
-                svg {
+                }}
+                svg {{
                     margin: 0;
                     font-family: saudi;
-                    direction: rtl;
-           
-        }
+                }} 
             </style>
         </head>
         <body>
-            <svg width="400pt" height="400pt">
-                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30pt" font-family="saudi" fill="red" direction="rtl" unicode-bidi="bidi-override" stroke-width="0.5" stroke="green">مرحبا بالعالم</text>
+            <svg width="{dimensions[0]}pt" height="{dimensions[1]}pt">
+                <text x="50%" y="50%" direction="{direction}" dominant-baseline="middle" text-anchor="middle" font-size="{font_size}pt" font-family="{font_family}" fill="{text_color}"  unicode-bidi="bidi-override" stroke-width="{stroke_width}" stroke="{stroke_color}">
+                {text}
+                </text>
             </svg>
         </body>
         </html>
     """
-    background = """
+    background = f"""
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <style>
-                * {
+                * {{
                     margin: 0;
                     padding: 0;
-                }
-            @font-face {
-             font-family: saudi;
-                 src: url('IamSaudi-Bold.ttf') format('truetype');
-                }
-                @page {
-                    size: 400pt 400pt;
+                }}
+                @page {{
+                    size: {dimensions[0]}pt {dimensions[1]}pt;
                     margin: 0;
                     padding: 0;
 
-                }
-                svg {
+                }}
+                svg {{
                     margin: 0;
-                    font-family: saudi;
-                    direction: rtl;
-                    background-color: #FF0000;
+                    background-color:{bg_color};
            
-        }
+        }}
+        
             </style>
         </head>
         <body>
-            <svg width="400pt" height="400pt">
+            <svg width="{dimensions[0]}pt" height="{dimensions[1]}pt">
             </svg>
         </body>
         </html>
@@ -257,24 +253,24 @@ def create_text_pdf(
         temp_pdf,
         options=options,
     )
-    convert_pdf_page(temp_pdf, 1, temp_text)
+    convert_pdf_page(output_path, 1, temp_text)
 
     with open(temp_html, "w", encoding="utf-8") as file:
         file.write(background)
 
     pdfkit.from_url(
         temp_html.as_uri(),
-        temp_pdf,
+        output_path,
         options=options,
     )
 
-    convert_pdf_page(temp_pdf, 1, temp_bg)
+    convert_pdf_page(output_path, 1, temp_bg)
 
     img = Image.open(temp_text).convert("RGBA")
-    img = img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+    img = img.resize((dimensions[0], dimensions[1]))
 
     bg_img = Image.open(temp_bg).convert("RGBA")
-    bg_img = bg_img.resize((dimensions[0], dimensions[1]), Image.Resampling.LANCZOS)
+    bg_img = bg_img.resize((dimensions[0], dimensions[1]))
     bg_img.putalpha(int(255 * bg_opacity * opacity))
 
     layer = Image.new("RGBA", bg_img.size, (0, 0, 0, 0))
@@ -283,7 +279,7 @@ def create_text_pdf(
     layer2.putalpha(int(255 * opacity))
     layer.paste(layer2, (0, 0), layer)
     result = Image.alpha_composite(bg_img, layer)
-    result.save(temp_pdf, "PDF")
+    result.save(output_path, "PDF")
 
     # Create a PDF with text at specified dimensions, with optional text and background colors.
     # pdf = FPDF("P", "pt", dimensions)
@@ -390,9 +386,6 @@ def convert_pdf_page(pdf_path, page_number, output, alpha=True):
         return False
 
 
-create_text_pdf()
-
-
 def convert_pdf_to_image_pdf(
     input_pdf_path="./output.pdf",
     output_pdf_path="./THE_output.pdf",
@@ -483,7 +476,7 @@ def merge_pdfs(
     is_final,
     start_loc=(0, 0),
     exclude_pages=None,
-    overlay_pdf_path=temp_dir / "Temp_2.pdf",
+    overlay_pdf_path=temp_pdf,
     base_pdf_path=temp_loop_pdf,
     invert=False,
     owner_pw=None,
