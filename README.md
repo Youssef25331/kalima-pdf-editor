@@ -1,6 +1,6 @@
 #  PDF Editor
 
-A Tool for editing PDF's for quickly  the Kalima Platform.
+A Tool for editing PDF's for quickly  the Kalima Platform
 
 
 ---
